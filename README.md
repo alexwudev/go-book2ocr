@@ -10,6 +10,12 @@
 
 A Windows desktop application for batch OCR processing, built with [Wails](https://wails.io/) (Go backend + Web frontend). It uses the [Google Cloud Vision API](https://cloud.google.com/vision) to recognize text from scanned book pages and outputs searchable PDFs.
 
+**Use Cases**
+- Digitize physical books, journals, or historical documents by scanning or photographing pages
+- Extract text from scanned pages to build a personal digital library
+- Convert book content into plain text for use with AI tools (e.g. ChatGPT, Claude) — enabling summarization, translation, Q&A, and analysis
+- Preserve rare or out-of-print materials in a searchable, archivable format
+
 ## Features
 
 ### Batch Rename

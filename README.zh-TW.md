@@ -10,6 +10,12 @@
 
 一款 Windows 桌面應用程式，用於批次 OCR 處理。使用 [Wails](https://wails.io/)（Go 後端 + Web 前端）開發，透過 [Google Cloud Vision API](https://cloud.google.com/vision) 辨識掃描書頁中的文字，並輸出可搜尋的 PDF 檔案。
 
+**使用場景**
+- 將實體書籍、期刊或歷史文獻透過掃描或翻拍數位化
+- 從掃描頁面中提取文字，建立個人數位圖書館
+- 將書籍內容轉換為純文字，提供給 AI 工具使用（如 ChatGPT、Claude）— 進行摘要、翻譯、問答與分析
+- 以可搜尋、可歸檔的格式保存珍本或絕版書籍
+
 ## 功能
 
 ### 批次重新命名
