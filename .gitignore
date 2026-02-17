@@ -29,6 +29,9 @@ frontend/node_modules/
 *.test
 *.out
 
+# Internal dev notes
+TODO.md
+
 # OS files
 .DS_Store
 Thumbs.db
