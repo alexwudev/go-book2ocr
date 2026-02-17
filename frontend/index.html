@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Tool</title>
+    <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+    <!-- Top progress bar (shown during OCR) -->
+    <div id="top-progress" class="top-progress hidden">
+        <div id="top-progress-bar" class="top-progress-fill"></div>
+        <span id="top-progress-text" class="top-progress-text"></span>
+    </div>
+
+    <!-- Session resume banner -->
+    <div id="session-banner" class="banner hidden">
+        <span id="session-banner-text"></span>
+        <button id="session-resume-btn" class="btn btn-sm btn-primary">繼續</button>
+        <button id="session-dismiss-btn" class="btn btn-sm btn-secondary">忽略</button>
+    </div>
+
+    <!-- Tab navigation -->
+    <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="rename">批次重新命名</button>
+        <button class="tab-btn" data-tab="ocr">批次 OCR</button>
+        <button class="tab-btn" data-tab="convert">圖片轉檔</button>
+        <div class="spacer"></div>
+        <button id="theme-toggle" class="btn btn-icon" title="切換主題">
+            <span id="theme-icon">&#9790;</span>
+        </button>
+    </nav>
+
+    <!-- Tab 1: Batch Rename -->
+    <div id="tab-rename" class="tab-panel active">
+        <div class="panel-content">
+            <div class="controls-section">
+                <div class="form-row">
+                    <label>掃描模式：</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="scan-mode-rename" value="dual" checked> 雙頁</label>
+                        <label><input type="radio" name="scan-mode-rename" value="single"> 單頁</label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>圖片資料夾：</label>
+                    <div class="path-selector">
+                        <span id="rename-dir-label" class="path-label">（未選擇）</span>
+                        <button id="rename-dir-btn" class="btn btn-secondary">瀏覽...</button>
+                        <button id="rename-reload-btn" class="btn btn-secondary" disabled title="重新讀取資料夾">&#x21BB;</button>
+                    </div>
+                </div>
+                <div class="form-row-group">
+                    <div class="form-row compact">
+                        <label>羅馬段起始：</label>
+                        <input id="roman-start" type="number" value="1" min="1" class="input-sm">
+                        <span class="hint">（i = 1, ii = 2 ...）</span>
+                    </div>
+                    <div class="form-row compact">
+                        <label>阿拉伯段起始：</label>
+                        <input id="arabic-start" type="number" value="1" min="0" class="input-sm">
+                    </div>
+                    <div class="form-row compact">
+                        <label>阿拉伯段從第</label>
+                        <input id="arabic-start-idx" type="number" value="0" min="0" class="input-sm">
+                        <span class="hint">張開始（0 = 全部阿拉伯）</span>
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button id="preview-rename-btn" class="btn btn-primary">預覽命名結果</button>
+                    <button id="execute-rename-btn" class="btn btn-success" disabled>執行重新命名</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div id="image-list" class="image-list"></div>
+            </div>
+        </div>
+
+        <!-- Hover preview overlay -->
+        <div id="hover-preview" class="hover-preview hidden">
+            <img id="hover-preview-img" src="" alt="preview">
+        </div>
+    </div>
+
+    <!-- Tab 2: Batch OCR -->
+    <div id="tab-ocr" class="tab-panel">
+        <div class="panel-content">
+            <div class="controls-section">
+                <div class="form-row">
+                    <label>掃描模式：</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="scan-mode-ocr" value="dual" checked> 雙頁</label>
+                        <label><input type="radio" name="scan-mode-ocr" value="single"> 單頁</label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>圖片資料夾：</label>
+                    <div class="path-selector">
+                        <span id="ocr-image-dir-label" class="path-label">（未選擇）</span>
+                        <button id="ocr-image-dir-btn" class="btn btn-secondary">瀏覽...</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>輸出資料夾：</label>
+                    <div class="path-selector">
+                        <span id="ocr-output-dir-label" class="path-label">（預設：自動）</span>
+                        <button id="ocr-output-dir-btn" class="btn btn-secondary">瀏覽...</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>API 金鑰：</label>
+                    <div class="path-selector">
+                        <span id="ocr-cred-label" class="path-label">（未選擇）</span>
+                        <button id="ocr-cred-btn" class="btn btn-secondary">瀏覽...</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>OCR 語言：</label>
+                    <div id="lang-checkboxes" class="checkbox-group"></div>
+                </div>
+                <div class="form-row">
+                    <label>併發數量：</label>
+                    <input id="concurrency-slider" type="range" min="1" max="10" value="5" class="slider">
+                    <span id="concurrency-value" class="slider-value">5</span>
+                </div>
+                <div class="form-row">
+                    <label>合併 PDF：</label>
+                    <div class="inline-controls">
+                        <input id="merge-pdf-check" type="checkbox" checked>
+                        <input id="merge-filename" type="text" value="Merge.pdf" placeholder="合併檔名" class="input-md">
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button id="start-ocr-btn" class="btn btn-primary">開始 OCR</button>
+                    <button id="stop-ocr-btn" class="btn btn-danger" disabled>停止</button>
+                </div>
+            </div>
+
+            <div class="progress-area">
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <span id="progress-text" class="progress-text">0 / 0</span>
+            </div>
+            <div id="log-area" class="log-area"></div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Image Convert -->
+    <div id="tab-convert" class="tab-panel">
+        <div class="panel-content">
+            <div class="controls-section">
+                <div class="form-row">
+                    <label>圖片資料夾：</label>
+                    <div class="path-selector">
+                        <span id="convert-dir-label" class="path-label">（未選擇）</span>
+                        <button id="convert-dir-btn" class="btn btn-secondary">瀏覽...</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>縮小比例：</label>
+                    <input id="convert-percent-slider" type="range" min="10" max="90" value="50" class="slider">
+                    <span id="convert-percent-value" class="slider-value">50%</span>
+                </div>
+                <div class="button-row">
+                    <button id="start-convert-btn" class="btn btn-primary" disabled>開始轉檔</button>
+                    <button id="stop-convert-btn" class="btn btn-danger" disabled>停止</button>
+                </div>
+            </div>
+
+            <div class="progress-area">
+                <div class="progress-bar-container">
+                    <div id="convert-progress-bar" class="progress-bar"></div>
+                </div>
+                <span id="convert-progress-text" class="progress-text">0 / 0</span>
+            </div>
+
+            <div id="convert-file-list" class="convert-file-list"></div>
+            <div id="convert-log-area" class="log-area"></div>
+        </div>
+    </div>
+
+    <!-- Status bar for system errors -->
+    <div id="status-bar">
+        <span id="status-bar-text">系統就緒</span>
+        <button id="status-bar-clear" onclick="document.getElementById('status-bar').className='status-bar';document.getElementById('status-bar-text').textContent='系統就緒';">✕</button>
+    </div>
+
+    <!-- Error capture MUST load before modules -->
+    <script>
+        window._statusLog = function(msg, isError) {
+            var bar = document.getElementById('status-bar');
+            var text = document.getElementById('status-bar-text');
+            if (!bar || !text) return;
+            text.textContent = msg;
+            bar.className = isError ? 'status-bar status-error' : 'status-bar status-info';
+        };
+        window.onerror = function(message, source, lineno, colno, error) {
+            window._statusLog('JS Error: ' + message + ' (' + source + ':' + lineno + ')', true);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+            window._statusLog('Promise Error: ' + event.reason, true);
+        });
+        // Also log when init starts/finishes
+        window._initStarted = false;
+    </script>
+
+    <script src="./src/main.js" type="module"></script>
+</body>
+</html>

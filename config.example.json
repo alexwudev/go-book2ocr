@@ -1,0 +1,12 @@
+{
+  "credFile": "key/your-service-account-key.json",
+  "languages": [
+    "en"
+  ],
+  "concurrency": 5,
+  "outputDir": "",
+  "mergePdf": true,
+  "mergeFilename": "Merge.pdf",
+  "theme": "dark",
+  "scanMode": "dual"
+}
