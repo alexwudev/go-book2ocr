@@ -31,14 +31,16 @@
 - 并发处理（可设置 1-10 个 worker）
 - 会话持久化：中断的任务可在下次启动时继续
 - 自动合并所有输出 PDF 为单一文件
-- 多语言支持：英文、日文、俄文、德文、意大利文、西班牙文、法文、繁体中文、简体中文
+- OCR 语言支持：英文、日文、俄文、德文、意大利文、西班牙文、法文、繁体中文、简体中文、荷兰文、波斯文、越南文、波兰文、葡萄牙文
 
 ### 图片转换
 - 按百分比（1-99%）批量缩放图片
 - 保留 EXIF 方向信息
 
 ### 通用功能
+- **多语言界面**：支持 14 种语言 — 繁體中文、简体中文、English、日本語、Русский、Deutsch、Italiano、Español、Français、Nederlands、فارسی、Tiếng Việt、Polski、Português
 - 深色 / 浅色主题切换
+- 波斯文 RTL 排版支持
 - 设置自动保存至 `config.json`
 
 ## 快速开始
@@ -68,7 +70,7 @@ build.bat          # Windows 环境
 
 ---
 
-首次启动后，前往**批量 OCR** 标签页设置 API 密钥路径与语言偏好，设置会自动保存。
+首次启动后，前往**批量 OCR** 标签页设置 API 密钥路径与语言偏好。可从右上角下拉菜单切换界面语言，设置会自动保存。
 
 ## 使用方式
 
@@ -181,6 +183,7 @@ cp config.example.json config.json
 | `mergeFilename` | 合并后的 PDF 文件名 |
 | `theme` | `"dark"` 或 `"light"` |
 | `scanMode` | `"dual"`（双页扫描）或 `"single"`（单页扫描） |
+| `uiLang` | 界面语言代码（例如 `"zh-TW"`、`"en"`、`"ja"`） |
 
 ## 从源码构建
 
@@ -215,11 +218,11 @@ OCR 标签页要求输入图片遵循特定命名格式（由重命名标签页�
 
 | 模式 | 格式 | 示例 |
 |------|------|------|
-| 双页 | `zzz-NNN-NNN.JPG` | `zzz-004-005.JPG`（第 4-5 页） |
-| 双页（罗马） | `zzz-r-xxx-xxx.JPG` | `zzz-r-iv-v.JPG`（第 iv-v 页） |
-| 单页 | `zzz-NNN.JPG` | `zzz-004.JPG`（第 4 页） |
-| 单页（罗马） | `zzz-r-xxx.JPG` | `zzz-r-iv.JPG`（第 iv 页） |
-| 图片页后缀 | `-a`、`-b`、`-c` | `zzz-004-005-a.JPG` |
+| 双页 | `Page-NNN-NNN.JPG` | `Page-004-005.JPG`（第 4-5 页） |
+| 双页（罗马） | `Page-r-xxx-xxx.JPG` | `Page-r-iv-v.JPG`（第 iv-v 页） |
+| 单页 | `Page-NNN.JPG` | `Page-004.JPG`（第 4 页） |
+| 单页（罗马） | `Page-r-xxx.JPG` | `Page-r-iv.JPG`（第 iv 页） |
+| 图片页后缀 | `-a`、`-b`、`-c` | `Page-004-005-a.JPG` |
 
 ## 项目结构
 
@@ -231,6 +234,7 @@ ocr-tool/
 ├── rename.go            # 批量重命名逻辑、页码分配
 ├── convert.go           # 图片缩放转换
 ├── models.go            # 共享数据类型
+├── CHANGELOG.md         # 版本历程
 ├── wails.json           # Wails 项目配置
 ├── build.bat            # Windows 编译脚本
 ├── build.sh             # WSL 交叉编译脚本
@@ -243,12 +247,13 @@ ocr-tool/
 │   ├── index.html       # 主 HTML
 │   ├── build.js         # 前端构建脚本
 │   └── src/
-│       ├── main.js      # 标签页切换、配置管理
+│       ├── main.js      # 标签页切换、配置管理、i18n 初始化
+│       ├── i18n.js      # 国际化（14 种语言）
 │       ├── ocr.js       # OCR 标签页 UI
 │       ├── rename.js    # 重命名标签页 UI
 │       ├── convert.js   # 转换标签页 UI
 │       ├── theme.js     # 主题切换
-│       └── style.css    # 所有样式
+│       └── style.css    # 所有样式（含 RTL 支持）
 └── output/              # 默认 OCR 输出目录（已被 git 忽略）
 ```
 

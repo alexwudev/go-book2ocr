@@ -31,14 +31,16 @@ A Windows desktop application for batch OCR processing, built with [Wails](https
 - Concurrent processing (configurable 1-10 workers)
 - Session persistence: interrupted jobs can be resumed on next launch
 - Auto-merge all output PDFs into one file
-- Multi-language support: English, Japanese, Russian, German, Italian, Spanish, French, Traditional Chinese, Simplified Chinese
+- OCR language support: English, Japanese, Russian, German, Italian, Spanish, French, Traditional Chinese, Simplified Chinese, Dutch, Persian, Vietnamese, Polish, Portuguese
 
 ### Image Convert
 - Batch resize images by percentage (1-99%)
 - Preserves EXIF orientation
 
 ### General
+- **Multi-language UI**: interface available in 14 languages — 繁體中文, 简体中文, English, 日本語, Русский, Deutsch, Italiano, Español, Français, Nederlands, فارسی, Tiếng Việt, Polski, Português
 - Dark / Light theme
+- RTL layout support for Persian
 - Settings saved to `config.json` automatically
 
 ## Quick Start
@@ -68,7 +70,7 @@ Then follow the same steps 4-6 from Option A.
 
 ---
 
-On first launch, go to the **Batch OCR** tab to set your API key path and language preferences. Settings are saved automatically.
+On first launch, go to the **Batch OCR** tab to set your API key path and language preferences. You can switch the UI language from the dropdown in the top-right corner. Settings are saved automatically.
 
 ## Usage
 
@@ -181,6 +183,7 @@ cp config.example.json config.json
 | `mergeFilename` | Merged PDF filename |
 | `theme` | `"dark"` or `"light"` |
 | `scanMode` | `"dual"` (two-page scan) or `"single"` (one-page scan) |
+| `uiLang` | UI language code (e.g. `"zh-TW"`, `"en"`, `"ja"`) |
 
 ## Building from Source
 
@@ -215,11 +218,11 @@ The OCR tab expects input images to follow a specific naming pattern (produced b
 
 | Mode | Pattern | Example |
 |------|---------|---------|
-| Dual-page | `zzz-NNN-NNN.JPG` | `zzz-004-005.JPG` (pages 4-5) |
-| Dual-page (Roman) | `zzz-r-xxx-xxx.JPG` | `zzz-r-iv-v.JPG` (pages iv-v) |
-| Single-page | `zzz-NNN.JPG` | `zzz-004.JPG` (page 4) |
-| Single-page (Roman) | `zzz-r-xxx.JPG` | `zzz-r-iv.JPG` (page iv) |
-| Image page suffix | `-a`, `-b`, `-c` | `zzz-004-005-a.JPG` |
+| Dual-page | `Page-NNN-NNN.JPG` | `Page-004-005.JPG` (pages 4-5) |
+| Dual-page (Roman) | `Page-r-xxx-xxx.JPG` | `Page-r-iv-v.JPG` (pages iv-v) |
+| Single-page | `Page-NNN.JPG` | `Page-004.JPG` (page 4) |
+| Single-page (Roman) | `Page-r-xxx.JPG` | `Page-r-iv.JPG` (page iv) |
+| Image page suffix | `-a`, `-b`, `-c` | `Page-004-005-a.JPG` |
 
 ## Project Structure
 
@@ -231,6 +234,7 @@ ocr-tool/
 ├── rename.go            # Batch rename logic, page numbering
 ├── convert.go           # Image resize/conversion
 ├── models.go            # Shared data types
+├── CHANGELOG.md         # Version history
 ├── wails.json           # Wails project config
 ├── build.bat            # Windows build script
 ├── build.sh             # WSL cross-compile script
@@ -243,12 +247,13 @@ ocr-tool/
 │   ├── index.html       # Main HTML
 │   ├── build.js         # Frontend build script
 │   └── src/
-│       ├── main.js      # Tab switching, config management
+│       ├── main.js      # Tab switching, config, i18n init
+│       ├── i18n.js      # Internationalization (14 languages)
 │       ├── ocr.js       # OCR tab UI
 │       ├── rename.js    # Rename tab UI
 │       ├── convert.js   # Convert tab UI
 │       ├── theme.js     # Theme toggling
-│       └── style.css    # All styles
+│       └── style.css    # All styles (incl. RTL support)
 └── output/              # Default OCR output directory (git-ignored)
 ```
 
