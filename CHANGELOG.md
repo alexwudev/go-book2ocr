@@ -21,6 +21,7 @@
 - Added `uiLang` field to `config.json` for persisting UI language preference
 - All user-facing strings are now served through the i18n translation system (`i18n.js`)
 - Tab bar now includes a language selector dropdown next to the theme toggle button
+- **Renamed file prefix**: `zzz-` → `Page-` (e.g. `Page-001-002.JPG`, `Page-r-i-ii.JPG`)
 
 ## v1.0.0 — 2025-02-14
 

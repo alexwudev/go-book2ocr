@@ -107,11 +107,11 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 			if isRoman {
 				preview.LeftPage = toRoman(leftPage)
 				preview.RightPage = toRoman(rightPage)
-				preview.NewName = fmt.Sprintf("zzz-r-%s-%s%s", toRoman(leftPage), toRoman(rightPage), ext)
+				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(leftPage), toRoman(rightPage), ext)
 			} else {
 				preview.LeftPage = fmt.Sprintf("%d", leftPage)
 				preview.RightPage = fmt.Sprintf("%d", rightPage)
-				preview.NewName = fmt.Sprintf("zzz-%03d-%03d%s", leftPage, rightPage, ext)
+				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", leftPage, rightPage, ext)
 			}
 			currentPage += 2
 
@@ -124,11 +124,11 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 			if isRoman {
 				preview.LeftPage = toRoman(leftPage)
 				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("zzz-r-%s-%s%s", toRoman(leftPage), toRoman(leftPage+1), ext)
+				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(leftPage), toRoman(leftPage+1), ext)
 			} else {
 				preview.LeftPage = fmt.Sprintf("%d", leftPage)
 				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("zzz-%03d-%03d%s", leftPage, leftPage+1, ext)
+				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", leftPage, leftPage+1, ext)
 			}
 			currentPage += 1 // only left page counted
 
@@ -140,11 +140,11 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 			if isRoman {
 				preview.LeftPage = "[img]"
 				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("zzz-r-%s-%s-%s%s", toRoman(lastValidPage), toRoman(lastValidPage+1), suffix, ext)
+				preview.NewName = fmt.Sprintf("Page-r-%s-%s-%s%s", toRoman(lastValidPage), toRoman(lastValidPage+1), suffix, ext)
 			} else {
 				preview.LeftPage = "[img]"
 				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("zzz-%03d-%03d-%s%s", lastValidPage, lastValidPage+1, suffix, ext)
+				preview.NewName = fmt.Sprintf("Page-%03d-%03d-%s%s", lastValidPage, lastValidPage+1, suffix, ext)
 			}
 			// currentPage unchanged — no pages counted
 
@@ -157,11 +157,11 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 			if isRoman {
 				preview.LeftPage = "[img]"
 				preview.RightPage = toRoman(rightPage)
-				preview.NewName = fmt.Sprintf("zzz-r-%s-%s%s", toRoman(rightPage-1), toRoman(rightPage), ext)
+				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(rightPage-1), toRoman(rightPage), ext)
 			} else {
 				preview.LeftPage = "[img]"
 				preview.RightPage = fmt.Sprintf("%d", rightPage)
-				preview.NewName = fmt.Sprintf("zzz-%03d-%03d%s", rightPage-1, rightPage, ext)
+				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", rightPage-1, rightPage, ext)
 			}
 			currentPage += 1 // only right page counted
 		}
@@ -224,11 +224,11 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 			if isRoman {
 				preview.LeftPage = toRoman(page)
 				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("zzz-r-%s%s", toRoman(page), ext)
+				preview.NewName = fmt.Sprintf("Page-r-%s%s", toRoman(page), ext)
 			} else {
 				preview.LeftPage = fmt.Sprintf("%d", page)
 				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("zzz-%03d%s", page, ext)
+				preview.NewName = fmt.Sprintf("Page-%03d%s", page, ext)
 			}
 			currentPage++
 
@@ -240,11 +240,11 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 			if isRoman {
 				preview.LeftPage = "[img]"
 				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("zzz-r-%s-%s%s", toRoman(lastValidPage), suffix, ext)
+				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(lastValidPage), suffix, ext)
 			} else {
 				preview.LeftPage = "[img]"
 				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("zzz-%03d-%s%s", lastValidPage, suffix, ext)
+				preview.NewName = fmt.Sprintf("Page-%03d-%s%s", lastValidPage, suffix, ext)
 			}
 			// currentPage unchanged
 
@@ -257,11 +257,11 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 			if isRoman {
 				preview.LeftPage = toRoman(page)
 				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("zzz-r-%s%s", toRoman(page), ext)
+				preview.NewName = fmt.Sprintf("Page-r-%s%s", toRoman(page), ext)
 			} else {
 				preview.LeftPage = fmt.Sprintf("%d", page)
 				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("zzz-%03d%s", page, ext)
+				preview.NewName = fmt.Sprintf("Page-%03d%s", page, ext)
 			}
 			currentPage++
 		}

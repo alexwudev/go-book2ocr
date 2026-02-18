@@ -20,11 +20,11 @@ import (
 	"google.golang.org/api/option"
 )
 
-var filePatternArabic = regexp.MustCompile(`^zzz-(\d{3})-(\d{3})(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
-var filePatternRoman = regexp.MustCompile(`^zzz-r-([ivxlcdm]+)-([ivxlcdm]+)(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
+var filePatternArabic = regexp.MustCompile(`^Page-(\d{3})-(\d{3})(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
+var filePatternRoman = regexp.MustCompile(`^Page-r-([ivxlcdm]+)-([ivxlcdm]+)(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
 
-var filePatternSingleArabic = regexp.MustCompile(`^zzz-(\d{3})(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
-var filePatternSingleRoman = regexp.MustCompile(`^zzz-r-([ivxlcdm]+)(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
+var filePatternSingleArabic = regexp.MustCompile(`^Page-(\d{3})(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
+var filePatternSingleRoman = regexp.MustCompile(`^Page-r-([ivxlcdm]+)(-[a-zA-Z])?\.(JPG|jpg|jpeg|JPEG)$`)
 
 func matchesOCRPattern(name string, scanMode string) bool {
 	if scanMode == "single" {
@@ -113,7 +113,7 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 	emitLog("", fmt.Sprintf("Scan mode: %s", modeLabel), 0, 0, false)
 
 	// Scan files
-	allFiles, err := filepath.Glob(filepath.Join(settings.ImageDir, "zzz-*.*"))
+	allFiles, err := filepath.Glob(filepath.Join(settings.ImageDir, "Page-*.*"))
 	if err != nil {
 		emitLog("", fmt.Sprintf("Scan failed: %v", err), 0, 0, true)
 		return
@@ -129,9 +129,9 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 
 	if len(files) == 0 {
 		if settings.ScanMode == "single" {
-			emitLog("", "No matching files found (single-page: zzz-NNN or zzz-r-xxx format)", 0, 0, true)
+			emitLog("", "No matching files found (single-page: Page-NNN or Page-r-xxx format)", 0, 0, true)
 		} else {
-			emitLog("", "No matching files found (dual-page: zzz-NNN-NNN or zzz-r-xxx-xxx format)", 0, 0, true)
+			emitLog("", "No matching files found (dual-page: Page-NNN-NNN or Page-r-xxx-xxx format)", 0, 0, true)
 		}
 		return
 	}
@@ -497,11 +497,11 @@ func extractBlockText(block *visionpb.Block) string {
 
 // pageLabelsFromFilename extracts page number labels from the filename
 func pageLabelsFromFilename(basename string) (left, right string) {
-	// Try Roman pattern: zzz-r-iv-v.JPG or zzz-r-iv-v-a.JPG
+	// Try Roman pattern: Page-r-iv-v.JPG or Page-r-iv-v-a.JPG
 	if m := filePatternRoman.FindStringSubmatch(basename); m != nil {
 		return "Page " + m[1], "Page " + m[2]
 	}
-	// Try Arabic pattern: zzz-004-005.JPG or zzz-004-005-a.JPG
+	// Try Arabic pattern: Page-004-005.JPG or Page-004-005-a.JPG
 	if m := filePatternArabic.FindStringSubmatch(basename); m != nil {
 		// Remove leading zeros for display
 		left := strings.TrimLeft(m[1], "0")
@@ -595,7 +595,7 @@ func (a *App) mergePDFs(outputDir, mergeFilename string) {
 		Message: "Merging all PDFs...",
 	})
 
-	pdfFiles, _ := filepath.Glob(filepath.Join(outputDir, "zzz-*.pdf"))
+	pdfFiles, _ := filepath.Glob(filepath.Join(outputDir, "Page-*.pdf"))
 	sort.Strings(pdfFiles)
 
 	if len(pdfFiles) == 0 {
