@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 let currentImages = [];
 let currentDir = '';
 let currentPreviews = [];
@@ -51,10 +53,10 @@ export function initRenameTab() {
     document.getElementById('rename-reload-btn').addEventListener('click', reloadFolder);
     document.getElementById('hover-preview').addEventListener('click', closePreview);
     document.getElementById('preview-rename-btn').addEventListener('click', () => {
-        log('預覽按鈕已點擊', false);
+        log(t('msg.previewClicked'), false);
         if (currentImages.length === 0) {
-            showError('\u8ACB\u5148\u9EDE\u64CA\u300C\u700F\u89BD...\u300D\u9078\u64C7\u5716\u7247\u8CC7\u6599\u593E');
-            log('錯誤：尚未選擇資料夾', true);
+            showError(t('msg.selectFolderFirst'));
+            log(t('msg.errorNoFolder'), true);
             return;
         }
         previewRename();
@@ -72,7 +74,7 @@ export function initRenameTab() {
         });
     });
 
-    log('重新命名事件監聯器已綁定', false);
+    log(t('msg.renameEvtBound'), false);
 }
 
 function updatePageTypeOptions() {
@@ -99,7 +101,7 @@ function updatePageTypeOptions() {
     });
 
     // Update override input placeholder
-    const placeholder = mode === 'single' ? '\u9801\u78BC' : '\u5DE6\u9801';
+    const placeholder = mode === 'single' ? t('placeholder.pageNum') : t('placeholder.leftPage');
     document.querySelectorAll('.page-override-input').forEach(input => {
         input.placeholder = placeholder;
     });
@@ -108,17 +110,17 @@ function updatePageTypeOptions() {
 async function selectFolder() {
     const log = window._statusLog || function() {};
     try {
-        log('正在開啟資料夾選擇對話框...', false);
+        log(t('msg.openingFolderDialog'), false);
         const app = await getApp();
-        const dir = await app.SelectDirectory('\u9078\u64C7\u5716\u7247\u8CC7\u6599\u593E');
-        if (!dir) { log('未選擇資料夾', false); return; }
+        const dir = await app.SelectDirectory(t('label.imageDir'));
+        if (!dir) { log(t('msg.noFolderSelected'), false); return; }
 
         currentDir = dir;
         document.getElementById('rename-dir-label').textContent = dir;
 
-        log('載入圖片中: ' + dir, false);
+        log(t('msg.loadingImages') + dir, false);
         currentImages = await app.LoadImagesFromFolder(dir);
-        log('已載入 ' + currentImages.length + ' 張圖片', false);
+        log(t('msg.loadedImages', { count: currentImages.length }), false);
         currentPreviews = [];
         renderImageList(currentImages);
 
@@ -126,8 +128,8 @@ async function selectFolder() {
         document.getElementById('execute-rename-btn').disabled = true;
         document.getElementById('rename-reload-btn').disabled = false;
     } catch (e) {
-        showError('\u8F09\u5165\u5716\u7247\u5931\u6557\uFF1A' + e);
-        log('載入圖片失敗: ' + e, true);
+        showError(t('msg.loadImageFailed') + e);
+        log(t('msg.loadImageFailed') + e, true);
     }
 }
 
@@ -147,7 +149,7 @@ async function reloadFolder() {
     });
 
     try {
-        log('重新讀取: ' + currentDir, false);
+        log(t('msg.reloadFolder') + currentDir, false);
         const app = await getApp();
         currentImages = await app.LoadImagesFromFolder(currentDir);
 
@@ -162,13 +164,17 @@ async function reloadFolder() {
             }
         });
 
-        log('已載入 ' + currentImages.length + ' 張圖片' + (restored > 0 ? '，已還原 ' + restored + ' 筆設定' : ''), false);
+        let msg = t('msg.loadedImages', { count: currentImages.length });
+        if (restored > 0) {
+            msg += t('msg.restoredSettings', { count: restored });
+        }
+        log(msg, false);
         currentPreviews = [];
         renderImageList(currentImages);
         document.getElementById('execute-rename-btn').disabled = true;
     } catch (e) {
-        showError('\u91CD\u65B0\u8B80\u53D6\u5931\u6557\uFF1A' + e);
-        log('重新讀取失敗: ' + e, true);
+        showError(t('msg.reloadFailed') + e);
+        log(t('msg.reloadFailed') + e, true);
     }
 }
 
@@ -179,8 +185,8 @@ function renderImageList(images) {
     const isSingle = mode === 'single';
     const hiddenA = isSingle ? 'hidden' : '';
     const hiddenC = isSingle ? 'hidden' : '';
-    const placeholder = isSingle ? '\u9801\u78BC' : '\u5DE6\u9801';
-    const typeBLabel = isSingle ? 'Type B (\u5716\u7247)' : 'Type B (\u96D9\u5716)';
+    const placeholder = isSingle ? t('placeholder.pageNum') : t('placeholder.leftPage');
+    const typeBLabel = isSingle ? t('pageType.typeB.single') : t('pageType.typeB.dual');
 
     images.forEach((img, idx) => {
         const item = document.createElement('div');
@@ -197,13 +203,13 @@ function renderImageList(images) {
                 <span class="new-filename hidden" data-role="new-name"></span>
                 <div class="page-controls">
                     <select class="page-type-select" data-idx="${idx}">
-                        <option value="Normal" ${img.pageType === 'Normal' ? 'selected' : ''}>Normal</option>
-                        <option value="TypeA" ${img.pageType === 'TypeA' ? 'selected' : ''} ${hiddenA}>Type A (\u53F3\u5716)</option>
+                        <option value="Normal" ${img.pageType === 'Normal' ? 'selected' : ''}>${t('pageType.normal')}</option>
+                        <option value="TypeA" ${img.pageType === 'TypeA' ? 'selected' : ''} ${hiddenA}>${t('pageType.typeA')}</option>
                         <option value="TypeB" ${img.pageType === 'TypeB' ? 'selected' : ''}>${typeBLabel}</option>
-                        <option value="TypeC" ${img.pageType === 'TypeC' ? 'selected' : ''} ${hiddenC}>Type C (\u5DE6\u5716)</option>
-                        <option value="Skip" ${img.pageType === 'Skip' ? 'selected' : ''}>\u4E0D\u547D\u540D</option>
+                        <option value="TypeC" ${img.pageType === 'TypeC' ? 'selected' : ''} ${hiddenC}>${t('pageType.typeC')}</option>
+                        <option value="Skip" ${img.pageType === 'Skip' ? 'selected' : ''}>${t('pageType.skip')}</option>
                     </select>
-                    <input class="page-override-input" data-idx="${idx}" type="number" min="1" placeholder="${placeholder}" value="${overrideVal}" title="\u624B\u52D5\u6307\u5B9A\u9801\u78BC\uFF08\u7A7A\u767D=\u81EA\u52D5\uFF09">
+                    <input class="page-override-input" data-idx="${idx}" type="number" min="1" placeholder="${placeholder}" value="${overrideVal}" title="${t('tooltip.overridePage')}">
                 </div>
             </div>
         `;
@@ -327,7 +333,7 @@ async function loadClickPreview(thumbContainer) {
 async function previewRename() {
     const log = window._statusLog || function() {};
     try {
-        log('正在計算命名預覽...', false);
+        log(t('msg.previewCalculating'), false);
         const app = await getApp();
         const arabicStartIdx = parseInt(document.getElementById('arabic-start-idx').value) || 0;
         const romanStart = parseInt(document.getElementById('roman-start').value) || 1;
@@ -344,12 +350,12 @@ async function previewRename() {
             );
         }
 
-        log('預覽計算完成: ' + currentPreviews.length + ' 筆結果', false);
+        log(t('msg.previewDone', { count: currentPreviews.length }), false);
         updatePreviewOnCards(currentPreviews);
         document.getElementById('execute-rename-btn').disabled = false;
     } catch (e) {
-        showError('\u9810\u89BD\u547D\u540D\u5931\u6557\uFF1A' + e);
-        log('預覽命名失敗: ' + e, true);
+        showError(t('msg.previewFailed') + e);
+        log(t('msg.previewFailed') + e, true);
     }
 }
 
@@ -366,7 +372,7 @@ function updatePreviewOnCards(previews) {
             newNameEl.textContent = '\u2192 ' + p.newName;
             newNameEl.className = 'new-filename new-filename-changed';
         } else {
-            newNameEl.textContent = '\u2192 ' + p.newName + ' (\u4E0D\u8B8A)';
+            newNameEl.textContent = '\u2192 ' + p.newName + ' ' + t('msg.unchanged');
             newNameEl.className = 'new-filename new-filename-same';
         }
         newNameEl.classList.remove('hidden');
@@ -378,20 +384,20 @@ async function executeRename() {
 
     const hasChanges = currentPreviews.some(p => p.originalName !== p.newName);
     if (!hasChanges) {
-        showError('\u6C92\u6709\u9700\u8981\u91CD\u65B0\u547D\u540D\u7684\u6A94\u6848');
+        showError(t('msg.noRenameNeeded'));
         return;
     }
 
     try {
         const app = await getApp();
         await app.ExecuteRename(currentDir, currentPreviews);
-        showSuccess('\u91CD\u65B0\u547D\u540D\u5B8C\u6210\uFF01');
+        showSuccess(t('msg.renameComplete'));
 
         currentImages = await app.LoadImagesFromFolder(currentDir);
         currentPreviews = [];
         renderImageList(currentImages);
         document.getElementById('execute-rename-btn').disabled = true;
     } catch (e) {
-        showError('\u91CD\u65B0\u547D\u540D\u5931\u6557\uFF1A' + e);
+        showError(t('msg.renameFailed') + e);
     }
 }

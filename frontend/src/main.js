@@ -2,18 +2,19 @@ import { initRenameTab } from './rename.js';
 import { initOCRTab, resumeOCR } from './ocr.js';
 import { initConvertTab } from './convert.js';
 import { initTheme } from './theme.js';
+import { t, setLanguage, uiLanguages, getCurrentLang } from './i18n.js';
 
 async function init() {
     const log = window._statusLog || function() {};
-    log('初始化中...', false);
+    log(t('status.initializing'), false);
 
     let App;
     try {
-        log('載入 Wails bindings...', false);
+        log(t('status.loadingBindings'), false);
         App = await import('../wailsjs/go/main/App.js');
-        log('Wails bindings 載入成功', false);
+        log(t('status.bindingsLoaded'), false);
     } catch (e) {
-        log('Wails bindings 載入失敗: ' + e, true);
+        log(t('msg.bindingsLoadFailed') + e, true);
         return;
     }
 
@@ -25,39 +26,42 @@ async function init() {
     // Load config and initialize
     let config;
     try {
-        log('載入設定...', false);
+        log(t('status.loadingConfig'), false);
         config = await App.GetConfig();
     } catch (e) {
         console.error('Failed to load config:', e);
-        config = { theme: 'dark', languages: ['en'], concurrency: 5, mergePdf: true, mergeFilename: 'Merge.pdf' };
+        config = { theme: 'dark', languages: ['en'], concurrency: 5, mergePdf: true, mergeFilename: 'Merge.pdf', uiLang: 'zh-TW' };
     }
+
+    // Initialize UI language FIRST so everything renders in correct language
+    initLanguageSelector(config.uiLang || 'zh-TW', App);
 
     try {
         initTheme(config.theme);
-        log('主題初始化完成', false);
+        log(t('status.themeInit'), false);
     } catch (e) {
-        log('主題初始化失敗: ' + e, true);
+        log(t('msg.themeInitFailed') + e, true);
     }
 
     try {
         initRenameTab();
-        log('重新命名 Tab 初始化完成', false);
+        log(t('status.renameTabInit'), false);
     } catch (e) {
-        log('重新命名 Tab 初始化失敗: ' + e, true);
+        log(t('msg.renameTabInitFailed') + e, true);
     }
 
     try {
         await initOCRTab(config);
-        log('OCR Tab 初始化完成', false);
+        log(t('status.ocrTabInit'), false);
     } catch (e) {
-        log('OCR Tab 初始化失敗: ' + e, true);
+        log(t('msg.ocrTabInitFailed') + e, true);
     }
 
     try {
         await initConvertTab();
-        log('轉檔 Tab 初始化完成', false);
+        log(t('status.convertTabInit'), false);
     } catch (e) {
-        log('轉檔 Tab 初始化失敗: ' + e, true);
+        log(t('msg.convertTabInitFailed') + e, true);
     }
 
     // Check for pending session
@@ -70,7 +74,40 @@ async function init() {
         console.error('Failed to check session:', e);
     }
 
-    log('系統就緒', false);
+    log(t('status.ready'), false);
+}
+
+function initLanguageSelector(savedLang, App) {
+    const select = document.getElementById('ui-lang-select');
+    if (!select) return;
+
+    // Populate options
+    select.innerHTML = '';
+    uiLanguages.forEach(lang => {
+        const opt = document.createElement('option');
+        opt.value = lang.code;
+        opt.textContent = lang.name;
+        select.appendChild(opt);
+    });
+
+    // Set saved language
+    select.value = savedLang;
+    setLanguage(savedLang);
+
+    // Listen for changes
+    select.addEventListener('change', async () => {
+        const lang = select.value;
+        setLanguage(lang);
+
+        // Save to config
+        try {
+            const config = await App.GetConfig();
+            config.uiLang = lang;
+            await App.SaveConfig(config);
+        } catch (e) {
+            console.error('Failed to save UI language:', e);
+        }
+    });
 }
 
 function switchTab(tabName) {
@@ -87,7 +124,7 @@ function showSessionBanner(session, clearSessionFn) {
     const text = document.getElementById('session-banner-text');
 
     const processed = session.processedFiles ? session.processedFiles.length : 0;
-    text.textContent = `\u4E0A\u6B21\u8655\u7406\u5230\u7B2C ${processed}/${session.totalFiles} \u5F35\uFF0C\u662F\u5426\u7E7C\u7E8C\uFF1F`;
+    text.textContent = t('msg.sessionResume', { processed, total: session.totalFiles });
     banner.classList.remove('hidden');
 
     document.getElementById('session-resume-btn').addEventListener('click', () => {

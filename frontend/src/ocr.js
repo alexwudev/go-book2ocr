@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 const MAX_LOG_LINES = 500;
 let logLines = [];
 let ocrImageDir = '';
@@ -119,7 +121,7 @@ async function setupOCREvents() {
         runtime.EventsOn('ocr:finished', () => {
             document.getElementById('start-ocr-btn').disabled = false;
             document.getElementById('stop-ocr-btn').disabled = true;
-            appendLog({ message: '\u8655\u7406\u5B8C\u6210\uFF01', isError: false, filename: '' });
+            appendLog({ message: t('msg.processingComplete'), isError: false, filename: '' });
 
             // Hide top progress bar
             const topProgress = document.getElementById('top-progress');
@@ -173,7 +175,7 @@ function appendLog(entry) {
 async function selectImageDir() {
     try {
         const app = await getApp();
-        const dir = await app.SelectDirectory('\u9078\u64C7\u5716\u7247\u8CC7\u6599\u593E');
+        const dir = await app.SelectDirectory(t('msg.selectImageDir'));
         if (!dir) return;
 
         ocrImageDir = dir;
@@ -192,7 +194,7 @@ async function selectImageDir() {
 async function selectOutputDir() {
     try {
         const app = await getApp();
-        const dir = await app.SelectDirectory('\u9078\u64C7\u8F38\u51FA\u8CC7\u6599\u593E');
+        const dir = await app.SelectDirectory(t('label.outputDir'));
         if (!dir) return;
 
         ocrOutputDir = dir;
@@ -206,7 +208,7 @@ async function selectOutputDir() {
 async function selectCredFile() {
     try {
         const app = await getApp();
-        const file = await app.SelectFile('\u9078\u64C7 API \u91D1\u9470', 'JSON \u6A94\u6848 (*.json)', '*.json');
+        const file = await app.SelectFile(t('label.apiKey'), 'JSON (*.json)', '*.json');
         if (!file) return;
 
         document.getElementById('ocr-cred-label').textContent = file;
@@ -242,28 +244,28 @@ async function startOCR() {
     const settings = gatherSettings();
 
     // Validate
-    if (!settings.imageDir || settings.imageDir.startsWith('\uFF08')) {
-        showOCRError('\u8ACB\u9078\u64C7\u5716\u7247\u8CC7\u6599\u593E');
+    if (!settings.imageDir || settings.imageDir.startsWith('\uFF08') || settings.imageDir === t('placeholder.notSelected')) {
+        showOCRError(t('msg.selectImageDir'));
         return;
     }
-    if (!settings.credFile || settings.credFile.startsWith('\uFF08')) {
-        showOCRError('\u8ACB\u9078\u64C7 API \u91D1\u9470\u6A94\u6848');
+    if (!settings.credFile || settings.credFile.startsWith('\uFF08') || settings.credFile === t('placeholder.notSelected')) {
+        showOCRError(t('msg.selectApiKey'));
         return;
     }
     if (settings.languages.length === 0) {
-        showOCRError('\u8ACB\u81F3\u5C11\u9078\u64C7\u4E00\u7A2E\u8A9E\u8A00');
+        showOCRError(t('msg.selectAtLeastOneLang'));
         return;
     }
 
     // Auto-set output dir if empty
-    if (!settings.outputDir || settings.outputDir.startsWith('\uFF08')) {
+    if (!settings.outputDir || settings.outputDir.startsWith('\uFF08') || settings.outputDir === t('placeholder.autoDefault')) {
         try {
             const app = await getApp();
             settings.outputDir = await app.GetDefaultOutputDir(settings.imageDir);
             ocrOutputDir = settings.outputDir;
             document.getElementById('ocr-output-dir-label').textContent = ocrOutputDir;
         } catch (e) {
-            showOCRError('\u7121\u6CD5\u8A2D\u5B9A\u8F38\u51FA\u8CC7\u6599\u593E: ' + e);
+            showOCRError(t('msg.cannotSetOutputDir') + e);
             return;
         }
     }

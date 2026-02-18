@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 let App = null;
 let Runtime = null;
 let convertDir = '';
@@ -75,7 +77,7 @@ async function setupConvertEvents() {
 async function selectConvertDir() {
     try {
         const app = await getApp();
-        const dir = await app.SelectDirectory('\u9078\u64C7\u5716\u7247\u8CC7\u6599\u593E');
+        const dir = await app.SelectDirectory(t('label.imageDir'));
         if (!dir) return;
 
         convertDir = dir;
@@ -95,7 +97,7 @@ async function loadConvertFileList(dir) {
         list.innerHTML = '';
 
         if (metadata.length === 0) {
-            list.innerHTML = '<div class="convert-empty">\u8CC7\u6599\u593E\u4E2D\u6C92\u6709\u5716\u7247</div>';
+            list.innerHTML = '<div class="convert-empty">' + t('msg.noImagesInDir') + '</div>';
             document.getElementById('start-convert-btn').disabled = true;
             return;
         }
@@ -103,7 +105,7 @@ async function loadConvertFileList(dir) {
         // Header
         const header = document.createElement('div');
         header.className = 'convert-row convert-header';
-        header.innerHTML = `<span class="convert-name">\u6A94\u540D</span><span class="convert-dim">\u5C3A\u5BF8</span><span class="convert-size">\u6A94\u6848\u5927\u5C0F</span>`;
+        header.innerHTML = `<span class="convert-name">${t('header.filename')}</span><span class="convert-dim">${t('header.dimensions')}</span><span class="convert-size">${t('header.fileSize')}</span>`;
         list.appendChild(header);
 
         let totalSize = 0;
@@ -118,7 +120,7 @@ async function loadConvertFileList(dir) {
         // Summary
         const summary = document.createElement('div');
         summary.className = 'convert-row convert-summary';
-        summary.innerHTML = `<span class="convert-name">\u5171 ${metadata.length} \u5F35</span><span class="convert-dim"></span><span class="convert-size">\u7E3D\u8A08 ${formatSize(totalSize)}</span>`;
+        summary.innerHTML = `<span class="convert-name">${t('summary.totalImages', { count: metadata.length })}</span><span class="convert-dim"></span><span class="convert-size">${t('summary.total')} ${formatSize(totalSize)}</span>`;
         list.appendChild(summary);
     } catch (e) {
         console.error('Failed to load metadata:', e);

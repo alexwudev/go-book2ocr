@@ -78,6 +78,7 @@ func (a *App) loadConfig() {
 			MergeFilename: "Merge.pdf",
 			Theme:         "dark",
 			ScanMode:      "dual",
+			UILang:        "zh-TW",
 		}
 		return
 	}
@@ -89,6 +90,7 @@ func (a *App) loadConfig() {
 			MergeFilename: "Merge.pdf",
 			Theme:         "dark",
 			ScanMode:      "dual",
+			UILang:        "zh-TW",
 		}
 	}
 }

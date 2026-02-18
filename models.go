@@ -41,6 +41,7 @@ type AppConfig struct {
 	MergeFilename string   `json:"mergeFilename"`
 	Theme         string   `json:"theme"`
 	ScanMode      string   `json:"scanMode"` // "dual" or "single"
+	UILang        string   `json:"uiLang"`   // UI language code, e.g. "zh-TW", "en"
 }
 
 // Session persisted to session.json for resume capability
@@ -98,4 +99,9 @@ var langOptions = []LangOption{
 	{"Français", "fr"},
 	{"繁體中文", "zh-TW"},
 	{"簡體中文", "zh-CN"},
+	{"Nederlands", "nl"},
+	{"فارسی", "fa"},
+	{"Tiếng Việt", "vi"},
+	{"Polski", "pl"},
+	{"Português", "pt"},
 }

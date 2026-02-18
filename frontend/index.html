@@ -16,17 +16,18 @@
     <!-- Session resume banner -->
     <div id="session-banner" class="banner hidden">
         <span id="session-banner-text"></span>
-        <button id="session-resume-btn" class="btn btn-sm btn-primary">繼續</button>
-        <button id="session-dismiss-btn" class="btn btn-sm btn-secondary">忽略</button>
+        <button id="session-resume-btn" class="btn btn-sm btn-primary" data-i18n="btn.resume">繼續</button>
+        <button id="session-dismiss-btn" class="btn btn-sm btn-secondary" data-i18n="btn.dismiss">忽略</button>
     </div>
 
     <!-- Tab navigation -->
     <nav class="tab-bar">
-        <button class="tab-btn active" data-tab="rename">批次重新命名</button>
-        <button class="tab-btn" data-tab="ocr">批次 OCR</button>
-        <button class="tab-btn" data-tab="convert">圖片轉檔</button>
+        <button class="tab-btn active" data-tab="rename" data-i18n="tab.rename">批次重新命名</button>
+        <button class="tab-btn" data-tab="ocr" data-i18n="tab.ocr">批次 OCR</button>
+        <button class="tab-btn" data-tab="convert" data-i18n="tab.convert">圖片轉檔</button>
         <div class="spacer"></div>
-        <button id="theme-toggle" class="btn btn-icon" title="切換主題">
+        <select id="ui-lang-select" class="lang-select" title="Language"></select>
+        <button id="theme-toggle" class="btn btn-icon" data-i18n-title="tooltip.toggleTheme" title="切換主題">
             <span id="theme-icon">&#9790;</span>
         </button>
     </nav>
@@ -36,39 +37,39 @@
         <div class="panel-content">
             <div class="controls-section">
                 <div class="form-row">
-                    <label>掃描模式：</label>
+                    <label data-i18n="label.scanMode">掃描模式：</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="scan-mode-rename" value="dual" checked> 雙頁</label>
-                        <label><input type="radio" name="scan-mode-rename" value="single"> 單頁</label>
+                        <label><input type="radio" name="scan-mode-rename" value="dual" checked> <span data-i18n="opt.dualPage">雙頁</span></label>
+                        <label><input type="radio" name="scan-mode-rename" value="single"> <span data-i18n="opt.singlePage">單頁</span></label>
                     </div>
                 </div>
                 <div class="form-row">
-                    <label>圖片資料夾：</label>
+                    <label data-i18n="label.imageDir">圖片資料夾：</label>
                     <div class="path-selector">
-                        <span id="rename-dir-label" class="path-label">（未選擇）</span>
-                        <button id="rename-dir-btn" class="btn btn-secondary">瀏覽...</button>
-                        <button id="rename-reload-btn" class="btn btn-secondary" disabled title="重新讀取資料夾">&#x21BB;</button>
+                        <span id="rename-dir-label" class="path-label" data-i18n="placeholder.notSelected">（未選擇）</span>
+                        <button id="rename-dir-btn" class="btn btn-secondary" data-i18n="btn.browse">瀏覽...</button>
+                        <button id="rename-reload-btn" class="btn btn-secondary" disabled data-i18n-title="tooltip.reload" title="重新讀取資料夾">&#x21BB;</button>
                     </div>
                 </div>
                 <div class="form-row-group">
                     <div class="form-row compact">
-                        <label>羅馬段起始：</label>
+                        <label data-i18n="label.romanStart">羅馬段起始：</label>
                         <input id="roman-start" type="number" value="1" min="1" class="input-sm">
-                        <span class="hint">（i = 1, ii = 2 ...）</span>
+                        <span class="hint" data-i18n="hint.romanFormat">（i = 1, ii = 2 ...）</span>
                     </div>
                     <div class="form-row compact">
-                        <label>阿拉伯段起始：</label>
+                        <label data-i18n="label.arabicStart">阿拉伯段起始：</label>
                         <input id="arabic-start" type="number" value="1" min="0" class="input-sm">
                     </div>
                     <div class="form-row compact">
-                        <label>阿拉伯段從第</label>
+                        <label data-i18n="label.arabicStartFrom">阿拉伯段從第</label>
                         <input id="arabic-start-idx" type="number" value="0" min="0" class="input-sm">
-                        <span class="hint">張開始（0 = 全部阿拉伯）</span>
+                        <span class="hint" data-i18n="hint.arabicAll">張開始（0 = 全部阿拉伯）</span>
                     </div>
                 </div>
                 <div class="button-row">
-                    <button id="preview-rename-btn" class="btn btn-primary">預覽命名結果</button>
-                    <button id="execute-rename-btn" class="btn btn-success" disabled>執行重新命名</button>
+                    <button id="preview-rename-btn" class="btn btn-primary" data-i18n="btn.previewRename">預覽命名結果</button>
+                    <button id="execute-rename-btn" class="btn btn-success" disabled data-i18n="btn.executeRename">執行重新命名</button>
                 </div>
             </div>
 
@@ -88,52 +89,52 @@
         <div class="panel-content">
             <div class="controls-section">
                 <div class="form-row">
-                    <label>掃描模式：</label>
+                    <label data-i18n="label.scanMode">掃描模式：</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="scan-mode-ocr" value="dual" checked> 雙頁</label>
-                        <label><input type="radio" name="scan-mode-ocr" value="single"> 單頁</label>
+                        <label><input type="radio" name="scan-mode-ocr" value="dual" checked> <span data-i18n="opt.dualPage">雙頁</span></label>
+                        <label><input type="radio" name="scan-mode-ocr" value="single"> <span data-i18n="opt.singlePage">單頁</span></label>
                     </div>
                 </div>
                 <div class="form-row">
-                    <label>圖片資料夾：</label>
+                    <label data-i18n="label.imageDir">圖片資料夾：</label>
                     <div class="path-selector">
-                        <span id="ocr-image-dir-label" class="path-label">（未選擇）</span>
-                        <button id="ocr-image-dir-btn" class="btn btn-secondary">瀏覽...</button>
+                        <span id="ocr-image-dir-label" class="path-label" data-i18n="placeholder.notSelected">（未選擇）</span>
+                        <button id="ocr-image-dir-btn" class="btn btn-secondary" data-i18n="btn.browse">瀏覽...</button>
                     </div>
                 </div>
                 <div class="form-row">
-                    <label>輸出資料夾：</label>
+                    <label data-i18n="label.outputDir">輸出資料夾：</label>
                     <div class="path-selector">
-                        <span id="ocr-output-dir-label" class="path-label">（預設：自動）</span>
-                        <button id="ocr-output-dir-btn" class="btn btn-secondary">瀏覽...</button>
+                        <span id="ocr-output-dir-label" class="path-label" data-i18n="placeholder.autoDefault">（預設：自動）</span>
+                        <button id="ocr-output-dir-btn" class="btn btn-secondary" data-i18n="btn.browse">瀏覽...</button>
                     </div>
                 </div>
                 <div class="form-row">
-                    <label>API 金鑰：</label>
+                    <label data-i18n="label.apiKey">API 金鑰：</label>
                     <div class="path-selector">
-                        <span id="ocr-cred-label" class="path-label">（未選擇）</span>
-                        <button id="ocr-cred-btn" class="btn btn-secondary">瀏覽...</button>
+                        <span id="ocr-cred-label" class="path-label" data-i18n="placeholder.notSelected">（未選擇）</span>
+                        <button id="ocr-cred-btn" class="btn btn-secondary" data-i18n="btn.browse">瀏覽...</button>
                     </div>
                 </div>
                 <div class="form-row">
-                    <label>OCR 語言：</label>
+                    <label data-i18n="label.ocrLang">OCR 語言：</label>
                     <div id="lang-checkboxes" class="checkbox-group"></div>
                 </div>
                 <div class="form-row">
-                    <label>併發數量：</label>
+                    <label data-i18n="label.concurrency">併發數量：</label>
                     <input id="concurrency-slider" type="range" min="1" max="10" value="5" class="slider">
                     <span id="concurrency-value" class="slider-value">5</span>
                 </div>
                 <div class="form-row">
-                    <label>合併 PDF：</label>
+                    <label data-i18n="label.mergePdf">合併 PDF：</label>
                     <div class="inline-controls">
                         <input id="merge-pdf-check" type="checkbox" checked>
-                        <input id="merge-filename" type="text" value="Merge.pdf" placeholder="合併檔名" class="input-md">
+                        <input id="merge-filename" type="text" value="Merge.pdf" data-i18n-placeholder="placeholder.mergeFilename" placeholder="合併檔名" class="input-md">
                     </div>
                 </div>
                 <div class="button-row">
-                    <button id="start-ocr-btn" class="btn btn-primary">開始 OCR</button>
-                    <button id="stop-ocr-btn" class="btn btn-danger" disabled>停止</button>
+                    <button id="start-ocr-btn" class="btn btn-primary" data-i18n="btn.startOcr">開始 OCR</button>
+                    <button id="stop-ocr-btn" class="btn btn-danger" disabled data-i18n="btn.stop">停止</button>
                 </div>
             </div>
 
@@ -152,20 +153,20 @@
         <div class="panel-content">
             <div class="controls-section">
                 <div class="form-row">
-                    <label>圖片資料夾：</label>
+                    <label data-i18n="label.imageDir">圖片資料夾：</label>
                     <div class="path-selector">
-                        <span id="convert-dir-label" class="path-label">（未選擇）</span>
-                        <button id="convert-dir-btn" class="btn btn-secondary">瀏覽...</button>
+                        <span id="convert-dir-label" class="path-label" data-i18n="placeholder.notSelected">（未選擇）</span>
+                        <button id="convert-dir-btn" class="btn btn-secondary" data-i18n="btn.browse">瀏覽...</button>
                     </div>
                 </div>
                 <div class="form-row">
-                    <label>縮小比例：</label>
+                    <label data-i18n="label.scalePercent">縮小比例：</label>
                     <input id="convert-percent-slider" type="range" min="10" max="90" value="50" class="slider">
                     <span id="convert-percent-value" class="slider-value">50%</span>
                 </div>
                 <div class="button-row">
-                    <button id="start-convert-btn" class="btn btn-primary" disabled>開始轉檔</button>
-                    <button id="stop-convert-btn" class="btn btn-danger" disabled>停止</button>
+                    <button id="start-convert-btn" class="btn btn-primary" disabled data-i18n="btn.startConvert">開始轉檔</button>
+                    <button id="stop-convert-btn" class="btn btn-danger" disabled data-i18n="btn.stop">停止</button>
                 </div>
             </div>
 
@@ -183,7 +184,7 @@
 
     <!-- Status bar for system errors -->
     <div id="status-bar">
-        <span id="status-bar-text">系統就緒</span>
+        <span id="status-bar-text" data-i18n="status.ready">系統就緒</span>
         <button id="status-bar-clear" onclick="document.getElementById('status-bar').className='status-bar';document.getElementById('status-bar-text').textContent='系統就緒';">✕</button>
     </div>
 
