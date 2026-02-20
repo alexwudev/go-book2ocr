@@ -1,5 +1,5 @@
 {
-  "name": "ocr-tool-frontend",
+  "name": "go-book2ocr-frontend",
   "private": true,
   "version": "1.0.0",
   "scripts": {

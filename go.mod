@@ -1,4 +1,4 @@
-module ocr-tool
+module go-book2ocr
 
 go 1.24.5
 

@@ -14,11 +14,11 @@ cd frontend && node build.js && cd ..
 
 echo "=== Building Windows exe ==="
 CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc \
-    go build -tags desktop,production -ldflags "-H windowsgui" -o ocr-tool.exe .
+    go build -tags desktop,production -ldflags "-H windowsgui" -o go-book2ocr.exe .
 
 if [ $? -eq 0 ]; then
-    echo "Build OK! -> ocr-tool.exe"
-    ls -lh ocr-tool.exe
+    echo "Build OK! -> go-book2ocr.exe"
+    ls -lh go-book2ocr.exe
 else
     echo "Build FAILED!"
     exit 1

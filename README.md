@@ -1,7 +1,7 @@
-# OCR Tool
+# Book2OCR
 
 <p align="center">
-  <img src="build/appicon.png" alt="OCR Tool" width="128">
+  <img src="build/appicon.png" alt="Book2OCR" width="128">
 </p>
 
 <p align="center">
@@ -47,20 +47,20 @@ A Windows desktop application for batch OCR processing, built with [Wails](https
 
 ### Option A: Download Pre-built Release (Recommended)
 
-1. Go to the [Releases](https://github.com/alexwudev/ocr-tool/releases) page
-2. Download the latest `ocr-tool.zip`
+1. Go to the [Releases](https://github.com/alexwudev/go-book2ocr/releases) page
+2. Download the latest `go-book2ocr.zip`
 3. Extract to any folder
 4. Place your Google Cloud API key in the `key/` folder (see [Setup](#1-google-cloud-vision-api-key) below)
 5. (Optional) Place a CJK font `.ttf` file in the `fonts/` folder for Chinese/Japanese/Korean support (see [Setup](#2-cjk-font-for-chinesejapanesekorean-ocr) below)
-6. Run `ocr-tool.exe`
+6. Run `go-book2ocr.exe`
 
 ### Option B: Build from Source
 
 Requires [Go](https://go.dev/) 1.24+ and [Node.js](https://nodejs.org/).
 
 ```bash
-git clone https://github.com/alexwudev/ocr-tool.git
-cd ocr-tool
+git clone https://github.com/alexwudev/go-book2ocr.git
+cd go-book2ocr
 build.bat          # on Windows
 # or
 ./build.sh         # on WSL (requires mingw-w64)
@@ -135,7 +135,7 @@ This tool is designed for digitizing scanned books. The typical workflow is:
 
 1. In the Cloud Console, go to **IAM & Admin > Service Accounts**
 2. Click **+ Create Service Account**
-3. Enter a name (e.g. `ocr-tool`), then click **Create and Continue**
+3. Enter a name (e.g. `go-book2ocr`), then click **Create and Continue**
 4. For the role, select **Project > Owner** (or a more restrictive role if preferred), then click **Continue > Done**
 5. Click on the newly created service account email
 6. Go to the **Keys** tab, click **Add Key > Create new key**
@@ -227,7 +227,7 @@ The OCR tab expects input images to follow a specific naming pattern (produced b
 ## Project Structure
 
 ```
-ocr-tool/
+go-book2ocr/
 ├── main.go              # App entry point
 ├── app.go               # Core app struct, config, session, thumbnails
 ├── ocr.go               # OCR pipeline, Vision API, PDF generation

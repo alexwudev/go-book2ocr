@@ -4,8 +4,8 @@ echo === Building frontend ===
 cd frontend
 call node build.js
 cd ..
-echo === Building ocr-tool.exe ===
-go build -tags desktop,production -ldflags "-H windowsgui" -o ocr-tool.exe .
+echo === Building go-book2ocr.exe ===
+go build -tags desktop,production -ldflags "-H windowsgui" -o go-book2ocr.exe .
 if %errorlevel% equ 0 (
     echo Build OK!
 ) else (

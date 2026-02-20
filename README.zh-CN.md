@@ -1,7 +1,7 @@
-# OCR Tool
+# Book2OCR
 
 <p align="center">
-  <img src="build/appicon.png" alt="OCR Tool" width="128">
+  <img src="build/appicon.png" alt="Book2OCR" width="128">
 </p>
 
 <p align="center">
@@ -47,20 +47,20 @@
 
 ### 方式 A：下载预编译版本（推荐）
 
-1. 前往 [Releases](https://github.com/alexwudev/ocr-tool/releases) 页面
-2. 下载最新的 `ocr-tool.zip`
+1. 前往 [Releases](https://github.com/alexwudev/go-book2ocr/releases) 页面
+2. 下载最新的 `go-book2ocr.zip`
 3. 解压到任意文件夹
 4. 将 Google Cloud API 密钥放入 `key/` 文件夹（详见下方[设置](#1-google-cloud-vision-api-密钥)）
 5. （可选）将 CJK 字体 `.ttf` 文件放入 `fonts/` 文件夹，以支持中日韩文字（详见下方[设置](#2-cjk-字体中日韩-ocr-用)）
-6. 运行 `ocr-tool.exe`
+6. 运行 `go-book2ocr.exe`
 
 ### 方式 B：从源码构建
 
 需要 [Go](https://go.dev/) 1.24+ 和 [Node.js](https://nodejs.org/)。
 
 ```bash
-git clone https://github.com/alexwudev/ocr-tool.git
-cd ocr-tool
+git clone https://github.com/alexwudev/go-book2ocr.git
+cd go-book2ocr
 build.bat          # Windows 环境
 # 或
 ./build.sh         # WSL 环境（需要 mingw-w64）
@@ -135,7 +135,7 @@ build.bat          # Windows 环境
 
 1. 在 Cloud Console 中，前往 **IAM 和管理 > 服务账号**
 2. 点击 **+ 创建服务账号**
-3. 输入名称（例如 `ocr-tool`），然后点击**创建并继续**
+3. 输入名称（例如 `go-book2ocr`），然后点击**创建并继续**
 4. 角色选择**项目 > 所有者**（或根据需要选择更严格的角色），点击**继续 > 完成**
 5. 点击刚创建的服务账号邮箱
 6. 前往**密钥**标签页，点击**添加密钥 > 创建新密钥**
@@ -227,7 +227,7 @@ OCR 标签页要求输入图片遵循特定命名格式（由重命名标签页�
 ## 项目结构
 
 ```
-ocr-tool/
+go-book2ocr/
 ├── main.go              # 应用程序入口
 ├── app.go               # 核心结构、配置、会话、缩略图
 ├── ocr.go               # OCR 流程、Vision API、PDF 生成
