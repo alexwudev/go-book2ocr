@@ -5,16 +5,72 @@
 </p>
 
 <p align="center">
-  English | <a href="README.zh-TW.md">繁體中文</a> | <a href="README.zh-CN.md">简体中文</a>
+  English | <a href="docs/README.zh-TW.md">繁體中文</a> | <a href="docs/README.zh-CN.md">简体中文</a> | <a href="docs/README.ja.md">日本語</a>
 </p>
 
 A Windows desktop application for batch OCR processing, built with [Wails](https://wails.io/) (Go backend + Web frontend). It uses the [Google Cloud Vision API](https://cloud.google.com/vision) to recognize text from scanned book pages and outputs searchable PDFs.
 
-**Use Cases**
-- Digitize physical books, journals, or historical documents by scanning or photographing pages
-- Extract text from scanned pages to build a personal digital library
-- Convert book content into plain text for use with AI tools (e.g. ChatGPT, Claude) — enabling summarization, translation, Q&A, and analysis
-- Preserve rare or out-of-print materials in a searchable, archivable format
+## Workflow
+
+```
+┌─────────────────────────────────────────┐
+│  1. Scan / Photograph                   │
+│     Use a scanner or smartphone camera  │
+│     to capture each page or spread      │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│  2. Organize Image Files                │
+│     Place all scanned images into a     │
+│     single folder, sorted by order      │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│  3. Batch Rename               [Rename] │
+│     Assign page numbers automatically   │
+│     (Roman + Arabic, special types)     │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│  4. Batch OCR → PDF               [OCR] │
+│     Send images to Google Cloud Vision  │
+│     API, generate one PDF per page      │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│  5. Merge & Output                      │
+│     Auto-merge all pages into a single  │
+│     searchable PDF, ready to use        │
+└─────────────────────────────────────────┘
+```
+
+## Table of Contents
+
+- [Workflow](#workflow)
+- [Features](#features)
+  - [Batch Rename](#batch-rename)
+  - [Batch OCR](#batch-ocr)
+  - [Image Convert](#image-convert)
+  - [General](#general)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+  - [Typical Workflow](#typical-workflow)
+  - [Rename Tab](#rename-tab)
+  - [OCR Tab](#ocr-tab)
+  - [Convert Tab](#convert-tab)
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+  - [Google Cloud Vision API Key](#1-google-cloud-vision-api-key)
+  - [CJK Font](#2-cjk-font-for-chinesejapanesekorean-ocr)
+  - [Configuration](#3-configuration)
+- [Building from Source](#building-from-source)
+- [File Naming Convention](#file-naming-convention)
+- [Project Structure](#project-structure)
+- [License](#license)
 
 ## Features
 
@@ -241,6 +297,7 @@ go-book2ocr/
 ├── config.example.json  # Example configuration
 ├── build/
 │   └── appicon.png      # App icon
+├── docs/                # Translated READMEs
 ├── fonts/               # Place CJK font files here
 ├── key/                 # Place API key files here (git-ignored)
 ├── frontend/
