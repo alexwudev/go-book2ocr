@@ -10,7 +10,7 @@
 
 一款 Windows 桌面应用程序，用于批量 OCR 处理。使用 [Wails](https://wails.io/)（Go 后端 + Web 前端）开发，通过 [Google Cloud Vision API](https://cloud.google.com/vision) 识别扫描书页中的文字，并输出可搜索的 PDF 文件。
 
-## 工作流程 [⬆](#目录)
+## 工作流程 <a href="#目录">⬆</a>
 
 ```
 ┌─────────────────────────────────────────┐
@@ -71,15 +71,15 @@
 - [项目结构](#项目结构)
 - [许可证](#许可证)
 
-## 功能 [⬆](#目录)
+## 功能 <a href="#目录">⬆</a>
 
-### 批量重命名 [⬆](#目录)
+### 批量重命名 <a href="#目录">⬆</a>
 - 从文件夹导入扫描图片，附带缩略图预览
 - 自动分配页码（支持前言使用罗马数字 + 正文使用阿拉伯数字）
 - 处理特殊页面类型：普通页面、纯图片页（Type A/B/C）、跳过页
 - 执行前可预览旧文件名与新文件名的对照
 
-### 批量 OCR [⬆](#目录)
+### 批量 OCR <a href="#目录">⬆</a>
 - 将图片发送至 Google Cloud Vision API 进行文字识别
 - **双页模式**：从双页扫描图中拆分左右页，分别输出为独立的 PDF 页面
 - **单页模式**：一张图片 = 一页 PDF
@@ -88,19 +88,19 @@
 - 自动合并所有输出 PDF 为单一文件
 - OCR 语言支持：英文、日文、俄文、德文、意大利文、西班牙文、法文、繁体中文、简体中文、荷兰文、波斯文、越南文、波兰文、葡萄牙文
 
-### 图片转换 [⬆](#目录)
+### 图片转换 <a href="#目录">⬆</a>
 - 按百分比（1-99%）批量缩放图片
 - 保留 EXIF 方向信息
 
-### 通用功能 [⬆](#目录)
+### 通用功能 <a href="#目录">⬆</a>
 - **多语言界面**：支持 14 种语言 — 繁體中文、简体中文、English、日本語、Русский、Deutsch、Italiano、Español、Français、Nederlands、فارسی、Tiếng Việt、Polski、Português
 - 深色 / 浅色主题切换
 - 波斯文 RTL 排版支持
 - 设置自动保存至 `config.json`
 
-## 快速开始 [⬆](#目录)
+## 快速开始 <a href="#目录">⬆</a>
 
-### 方式 A：下载预编译版本（推荐） [⬆](#目录)
+### 方式 A：下载预编译版本（推荐） <a href="#目录">⬆</a>
 
 1. 前往 [Releases](https://github.com/alexwudev/go-book2ocr/releases) 页面
 2. 下载最新的 `go-book2ocr.zip`
@@ -109,7 +109,7 @@
 5. （可选）将 CJK 字体 `.ttf` 文件放入 `fonts/` 文件夹，以支持中日韩文字（详见下方[设置](#2-cjk-字体中日韩-ocr-用)）
 6. 运行 `go-book2ocr.exe`
 
-### 方式 B：从源码构建 [⬆](#目录)
+### 方式 B：从源码构建 <a href="#目录">⬆</a>
 
 需要 [Go](https://go.dev/) 1.24+ 和 [Node.js](https://nodejs.org/)。
 
@@ -127,9 +127,9 @@ build.bat          # Windows 环境
 
 首次启动后，前往**批量 OCR** 标签页设置 API 密钥路径与语言偏好。可从右上角下拉菜单切换界面语言，设置会自动保存。
 
-## 使用方式 [⬆](#目录)
+## 使用方式 <a href="#目录">⬆</a>
 
-### 典型工作流程 [⬆](#目录)
+### 典型工作流程 <a href="#目录">⬆</a>
 
 本工具专为数字化扫描书籍设计，典型流程如下：
 
@@ -138,7 +138,7 @@ build.bat          # Windows 环境
 3. **批量 OCR** — 使用 OCR 标签页识别文字并生成可搜索的 PDF
 4. 输出结果为按页码排列的合并 PDF，包含完整书籍文字
 
-### 重命名标签页 [⬆](#目录)
+### 重命名标签页 <a href="#目录">⬆</a>
 
 1. 点击**选择文件夹**，选择存放扫描图片的文件夹
 2. 缩略图会自动加载，显示每张图片的预览
@@ -152,7 +152,7 @@ build.bat          # Windows 环境
    - **Skip** — 跳过此图片，不参与重命名
 6. 确认旧/新文件名预览无误后，点击**执行重命名**
 
-### OCR 标签页 [⬆](#目录)
+### OCR 标签页 <a href="#目录">⬆</a>
 
 1. 点击**选择图片文件夹** — 选择已重命名的图片文件夹
 2. 点击**选择 API 密钥** — 选择 Google Cloud 服务账户 JSON 文件
@@ -162,21 +162,21 @@ build.bat          # Windows 环境
 6. 点击**开始 OCR**
 7. 实时显示进度与日志；可随时停止，下次启动时继续
 
-### 转换标签页 [⬆](#目录)
+### 转换标签页 <a href="#目录">⬆</a>
 
 1. 选择图片文件夹
 2. 设置缩放百分比（1-99%）
 3. 点击**开始** — 图片会原地缩放覆盖
 
-## 前置要求 [⬆](#目录)
+## 前置要求 <a href="#目录">⬆</a>
 
 - **Windows**（本应用程序为 Windows 桌面应用）
 - **Google Cloud Vision API** 凭据（服务账户 JSON 密钥）— 详见下方设置
 - **CJK 字体**（仅在 OCR 中日韩文字时需要）— 详见下方设置
 
-## 设置 [⬆](#目录)
+## 设置 <a href="#目录">⬆</a>
 
-### 1. Google Cloud Vision API 密钥 [⬆](#目录)
+### 1. Google Cloud Vision API 密钥 <a href="#目录">⬆</a>
 
 #### 启用 Cloud Vision API
 
@@ -204,7 +204,7 @@ Cloud Vision API 每月提供 **1,000 次免费调用**。超过免费额度后�
 
 完整费用详情请参阅 [Cloud Vision API 定价](https://cloud.google.com/vision/pricing)页面。
 
-### 2. CJK 字体（中日韩 OCR 用） [⬆](#目录)
+### 2. CJK 字体（中日韩 OCR 用） <a href="#目录">⬆</a>
 
 PDF 内置字体（Helvetica）不支持 CJK 字符。若要正确输出中日韩文字，请将支持 CJK 的 `.ttf` 字体文件放入 `fonts/` 目录。
 
@@ -220,7 +220,7 @@ PDF 内置字体（Helvetica）不支持 CJK 字符。若要正确输出中日�
 
 > 若 `fonts/` 中找不到任何字体，应用程序会回退使用 Helvetica + CP1252 编码（仅支持西欧字符）。
 
-### 3. 配置文件 [⬆](#目录)
+### 3. 配置文件 <a href="#目录">⬆</a>
 
 应用程序首次运行时会自动生成 `config.json`。你也可以手动从示例创建：
 
@@ -240,34 +240,34 @@ cp config.example.json config.json
 | `scanMode` | `"dual"`（双页扫描）或 `"single"`（单页扫描） |
 | `uiLang` | 界面语言代码（例如 `"zh-TW"`、`"en"`、`"ja"`） |
 
-## 从源码构建 [⬆](#目录)
+## 从源码构建 <a href="#目录">⬆</a>
 
-### 要求 [⬆](#目录)
+### 要求 <a href="#目录">⬆</a>
 
 - [Go](https://go.dev/) 1.24+
 - [Node.js](https://nodejs.org/)
 - [Wails CLI](https://wails.io/docs/gettingstarted/installation)（可选，用于 `wails dev`）
 
-### Windows（原生编译） [⬆](#目录)
+### Windows（原生编译） <a href="#目录">⬆</a>
 
 ```batch
 build.bat
 ```
 
-### WSL（交叉编译为 Windows） [⬆](#目录)
+### WSL（交叉编译为 Windows） <a href="#目录">⬆</a>
 
 ```bash
 # 需要 mingw-w64：sudo apt install gcc-mingw-w64-x86-64
 ./build.sh
 ```
 
-### 开发模式 [⬆](#目录)
+### 开发模式 <a href="#目录">⬆</a>
 
 ```bash
 wails dev
 ```
 
-## 文件命名规则 [⬆](#目录)
+## 文件命名规则 <a href="#目录">⬆</a>
 
 OCR 标签页要求输入图片遵循特定命名格式（由重命名标签页生成）：
 
@@ -279,7 +279,7 @@ OCR 标签页要求输入图片遵循特定命名格式（由重命名标签页�
 | 单页（罗马） | `Page-r-xxx.JPG` | `Page-r-iv.JPG`（第 iv 页） |
 | 图片页后缀 | `-a`、`-b`、`-c` | `Page-004-005-a.JPG` |
 
-## 项目结构 [⬆](#目录)
+## 项目结构 <a href="#目录">⬆</a>
 
 ```
 go-book2ocr/
@@ -313,6 +313,6 @@ go-book2ocr/
 └── output/              # 默认 OCR 输出目录（已被 git 忽略）
 ```
 
-## 许可证 [⬆](#目录)
+## 许可证 <a href="#目录">⬆</a>
 
 [MIT](../LICENSE)

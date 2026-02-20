@@ -10,7 +10,7 @@
 
 A Windows desktop application for batch OCR processing, built with [Wails](https://wails.io/) (Go backend + Web frontend). It uses the [Google Cloud Vision API](https://cloud.google.com/vision) to recognize text from scanned book pages and outputs searchable PDFs.
 
-## Workflow [⬆](#table-of-contents)
+## Workflow <a href="#table-of-contents">⬆</a>
 
 ```
 ┌─────────────────────────────────────────┐
@@ -72,15 +72,15 @@ A Windows desktop application for batch OCR processing, built with [Wails](https
 - [Project Structure](#project-structure)
 - [License](#license)
 
-## Features [⬆](#table-of-contents)
+## Features <a href="#table-of-contents">⬆</a>
 
-### Batch Rename [⬆](#table-of-contents)
+### Batch Rename <a href="#table-of-contents">⬆</a>
 - Import scanned images from a folder with thumbnail preview
 - Assign page numbers automatically (supports Roman numerals for preface + Arabic numerals for body text)
 - Handle special page types: normal pages, image-only pages (Type A/B/C), skip pages
 - Preview old/new filenames before executing
 
-### Batch OCR [⬆](#table-of-contents)
+### Batch OCR <a href="#table-of-contents">⬆</a>
 - Send images to Google Cloud Vision API for text recognition
 - **Dual-page mode**: split left/right pages from a two-page scan into separate PDF pages
 - **Single-page mode**: one image = one PDF page
@@ -89,19 +89,19 @@ A Windows desktop application for batch OCR processing, built with [Wails](https
 - Auto-merge all output PDFs into one file
 - OCR language support: English, Japanese, Russian, German, Italian, Spanish, French, Traditional Chinese, Simplified Chinese, Dutch, Persian, Vietnamese, Polish, Portuguese
 
-### Image Convert [⬆](#table-of-contents)
+### Image Convert <a href="#table-of-contents">⬆</a>
 - Batch resize images by percentage (1-99%)
 - Preserves EXIF orientation
 
-### General [⬆](#table-of-contents)
+### General <a href="#table-of-contents">⬆</a>
 - **Multi-language UI**: interface available in 14 languages — 繁體中文, 简体中文, English, 日本語, Русский, Deutsch, Italiano, Español, Français, Nederlands, فارسی, Tiếng Việt, Polski, Português
 - Dark / Light theme
 - RTL layout support for Persian
 - Settings saved to `config.json` automatically
 
-## Quick Start [⬆](#table-of-contents)
+## Quick Start <a href="#table-of-contents">⬆</a>
 
-### Option A: Download Pre-built Release (Recommended) [⬆](#table-of-contents)
+### Option A: Download Pre-built Release (Recommended) <a href="#table-of-contents">⬆</a>
 
 1. Go to the [Releases](https://github.com/alexwudev/go-book2ocr/releases) page
 2. Download the latest `go-book2ocr.zip`
@@ -110,7 +110,7 @@ A Windows desktop application for batch OCR processing, built with [Wails](https
 5. (Optional) Place a CJK font `.ttf` file in the `fonts/` folder for Chinese/Japanese/Korean support (see [Setup](#2-cjk-font-for-chinesejapanesekorean-ocr) below)
 6. Run `go-book2ocr.exe`
 
-### Option B: Build from Source [⬆](#table-of-contents)
+### Option B: Build from Source <a href="#table-of-contents">⬆</a>
 
 Requires [Go](https://go.dev/) 1.24+ and [Node.js](https://nodejs.org/).
 
@@ -128,9 +128,9 @@ Then follow the same steps 4-6 from Option A.
 
 On first launch, go to the **Batch OCR** tab to set your API key path and language preferences. You can switch the UI language from the dropdown in the top-right corner. Settings are saved automatically.
 
-## Usage [⬆](#table-of-contents)
+## Usage <a href="#table-of-contents">⬆</a>
 
-### Typical Workflow [⬆](#table-of-contents)
+### Typical Workflow <a href="#table-of-contents">⬆</a>
 
 This tool is designed for digitizing scanned books. The typical workflow is:
 
@@ -139,7 +139,7 @@ This tool is designed for digitizing scanned books. The typical workflow is:
 3. **Batch OCR** — use the OCR tab to recognize text and generate searchable PDFs
 4. The output is a merged PDF with the full book text, organized by page number
 
-### Rename Tab [⬆](#table-of-contents)
+### Rename Tab <a href="#table-of-contents">⬆</a>
 
 1. Click **Select Folder** and choose the folder containing your scanned images
 2. Thumbnails will load with a preview of each image
@@ -153,7 +153,7 @@ This tool is designed for digitizing scanned books. The typical workflow is:
    - **Skip** — exclude this image from renaming
 6. Review the old/new filename preview, then click **Execute Rename**
 
-### OCR Tab [⬆](#table-of-contents)
+### OCR Tab <a href="#table-of-contents">⬆</a>
 
 1. Click **Select Image Folder** — choose the folder with renamed images (from step above)
 2. Click **Select API Key** — choose your Google Cloud service account JSON file
@@ -163,21 +163,21 @@ This tool is designed for digitizing scanned books. The typical workflow is:
 6. Click **Start OCR**
 7. Progress and logs are displayed in real-time; you can stop and resume later
 
-### Convert Tab [⬆](#table-of-contents)
+### Convert Tab <a href="#table-of-contents">⬆</a>
 
 1. Select a folder of images
 2. Set the resize percentage (1-99%)
 3. Click **Start** — images are resized in place
 
-## Prerequisites [⬆](#table-of-contents)
+## Prerequisites <a href="#table-of-contents">⬆</a>
 
 - **Windows** (the app is built as a Windows desktop application)
 - **Google Cloud Vision API** credentials (service account JSON key) — see setup below
 - **A CJK-capable font** (required only if you OCR Chinese/Japanese/Korean text) — see setup below
 
-## Setup [⬆](#table-of-contents)
+## Setup <a href="#table-of-contents">⬆</a>
 
-### 1. Google Cloud Vision API Key [⬆](#table-of-contents)
+### 1. Google Cloud Vision API Key <a href="#table-of-contents">⬆</a>
 
 #### Enable the Cloud Vision API
 
@@ -205,7 +205,7 @@ Cloud Vision API offers **1,000 free calls per month**. Beyond the free tier, te
 
 For full pricing details, see the [Cloud Vision API Pricing](https://cloud.google.com/vision/pricing) page.
 
-### 2. CJK Font (for Chinese/Japanese/Korean OCR) [⬆](#table-of-contents)
+### 2. CJK Font (for Chinese/Japanese/Korean OCR) <a href="#table-of-contents">⬆</a>
 
 The built-in PDF font (Helvetica) does not support CJK characters. To output CJK text correctly, place a CJK-capable `.ttf` font file in the `fonts/` directory.
 
@@ -221,7 +221,7 @@ Recommended fonts (any one will work):
 
 > If no font is found in `fonts/`, the app falls back to Helvetica with CP1252 encoding (Western European characters only).
 
-### 3. Configuration [⬆](#table-of-contents)
+### 3. Configuration <a href="#table-of-contents">⬆</a>
 
 The app generates `config.json` automatically on first run. You can also create it manually from the example:
 
@@ -241,34 +241,34 @@ cp config.example.json config.json
 | `scanMode` | `"dual"` (two-page scan) or `"single"` (one-page scan) |
 | `uiLang` | UI language code (e.g. `"zh-TW"`, `"en"`, `"ja"`) |
 
-## Building from Source [⬆](#table-of-contents)
+## Building from Source <a href="#table-of-contents">⬆</a>
 
-### Requirements [⬆](#table-of-contents)
+### Requirements <a href="#table-of-contents">⬆</a>
 
 - [Go](https://go.dev/) 1.24+
 - [Node.js](https://nodejs.org/)
 - [Wails CLI](https://wails.io/docs/gettingstarted/installation) (optional, for `wails dev`)
 
-### Windows (native) [⬆](#table-of-contents)
+### Windows (native) <a href="#table-of-contents">⬆</a>
 
 ```batch
 build.bat
 ```
 
-### WSL (cross-compile to Windows) [⬆](#table-of-contents)
+### WSL (cross-compile to Windows) <a href="#table-of-contents">⬆</a>
 
 ```bash
 # Requires mingw-w64: sudo apt install gcc-mingw-w64-x86-64
 ./build.sh
 ```
 
-### Development mode [⬆](#table-of-contents)
+### Development mode <a href="#table-of-contents">⬆</a>
 
 ```bash
 wails dev
 ```
 
-## File Naming Convention [⬆](#table-of-contents)
+## File Naming Convention <a href="#table-of-contents">⬆</a>
 
 The OCR tab expects input images to follow a specific naming pattern (produced by the Rename tab):
 
@@ -280,7 +280,7 @@ The OCR tab expects input images to follow a specific naming pattern (produced b
 | Single-page (Roman) | `Page-r-xxx.JPG` | `Page-r-iv.JPG` (page iv) |
 | Image page suffix | `-a`, `-b`, `-c` | `Page-004-005-a.JPG` |
 
-## Project Structure [⬆](#table-of-contents)
+## Project Structure <a href="#table-of-contents">⬆</a>
 
 ```
 go-book2ocr/
@@ -314,6 +314,6 @@ go-book2ocr/
 └── output/              # Default OCR output directory (git-ignored)
 ```
 
-## License [⬆](#table-of-contents)
+## License <a href="#table-of-contents">⬆</a>
 
 [MIT](LICENSE)
