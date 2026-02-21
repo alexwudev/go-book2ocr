@@ -100,6 +100,7 @@ func (a *App) StartConvert(dir string, percent int) string {
 			a.convertRunning = false
 			a.cancelConvert = nil
 			a.mu.Unlock()
+			setTaskbarProgress(0)
 			wailsRuntime.EventsEmit(a.ctx, "convert:finished", nil)
 		}()
 		a.runConvert(ctx, dir, percent)
@@ -126,11 +127,13 @@ func (a *App) runConvert(ctx context.Context, dir string, percent int) {
 	}
 
 	emitProgress := func(current, total int) {
+		pct := float64(current) / float64(total)
 		wailsRuntime.EventsEmit(a.ctx, "convert:progress", ProgressUpdate{
 			Current: current,
 			Total:   total,
-			Percent: float64(current) / float64(total),
+			Percent: pct,
 		})
+		setTaskbarProgress(pct * 100)
 	}
 
 	if percent < 1 || percent > 99 {

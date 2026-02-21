@@ -1,0 +1,30 @@
+{
+  "RT_GROUP_ICON": {
+    "APP": {
+      "0000": "../../build/windows/icon.ico"
+    }
+  },
+  "RT_MANIFEST": {
+    "#1": {
+      "0409": "../../build/windows/wails.exe.manifest"
+    }
+  },
+  "RT_VERSION": {
+    "#1": {
+      "0000": {
+        "fixed": {
+          "file_version": "1.0.0.0",
+          "product_version": "1.0.0.0"
+        },
+        "info": {
+          "0409": {
+            "ProductName": "OCR Tool",
+            "FileDescription": "Book OCR Tool with Google Cloud Vision",
+            "CompanyName": "alexwudev",
+            "LegalCopyright": "MIT License"
+          }
+        }
+      }
+    }
+  }
+}

@@ -8,7 +8,7 @@
   <a href="../README.md">English</a> | 繁體中文 | <a href="README.zh-CN.md">简体中文</a> | <a href="README.ja.md">日本語</a>
 </p>
 
-一款 Windows 桌面應用程式，用於批次 OCR 處理。使用 [Wails](https://wails.io/)（Go 後端 + Web 前端）開發，透過 [Google Cloud Vision API](https://cloud.google.com/vision) 辨識掃描書頁中的文字，並輸出可搜尋的 PDF 檔案。
+一款桌面應用程式，用於批次 OCR 處理。使用 [Wails](https://wails.io/)（Go 後端 + Web 前端）開發，透過 [Google Cloud Vision API](https://cloud.google.com/vision) 辨識掃描書頁中的文字，並輸出可搜尋的 PDF 檔案。支援 **Windows** 和 **Linux**。
 
 <h2 id="目錄">目錄</h2>
 
@@ -94,6 +94,9 @@
 - 保留 EXIF 方向資訊
 
 <h3 id="一般功能">一般功能 <a href="#目錄">⬆</a></h3>
+- **自訂標題列進度顯示**：無框視窗搭配自訂標題列，OCR／轉檔進行時標題列會隨進度填滿顏色
+- **Windows 工作列進度**：OCR 和圖片轉檔時，工作列按鈕即時顯示進度
+- **計時器**：OCR 和圖片轉檔時即時顯示已用時間；完成後顯示最終耗時
 - **多語言介面**：支援 14 種語言 — 繁體中文、简体中文、English、日本語、Русский、Deutsch、Italiano、Español、Français、Nederlands、فارسی、Tiếng Việt、Polski、Português
 - 深色 / 淺色主題切換
 - 波斯文 RTL 排版支援
@@ -119,7 +122,7 @@ git clone https://github.com/alexwudev/go-book2ocr.git
 cd go-book2ocr
 build.bat          # Windows 環境
 # 或
-./build.sh         # WSL 環境（需要 mingw-w64）
+./build.sh         # WSL 環境（互動式選單：Windows 或 Linux）
 ```
 
 之後按照方式 A 的步驟 4-6 操作即可。
@@ -171,7 +174,21 @@ build.bat          # Windows 環境
 
 <h2 id="前置需求">前置需求 <a href="#目錄">⬆</a></h2>
 
-- **Windows**（本應用程式為 Windows 桌面應用）
+**Windows**（x64）：
+
+- Windows 10/11
+- [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)（大部分 Windows 10/11 已預先安裝）
+
+**Linux**（x64）：
+
+- GTK 3 和 WebKit2GTK 4.0
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37
+  ```
+
+**兩個平台皆需：**
+
 - **Google Cloud Vision API** 憑證（服務帳戶 JSON 金鑰）— 詳見下方設定
 - **CJK 字體**（僅在 OCR 中日韓文字時需要）— 詳見下方設定
 
@@ -245,24 +262,49 @@ cp config.example.json config.json
 
 <h3 id="需求">需求 <a href="#目錄">⬆</a></h3>
 
+**通用（兩個平台皆需）：**
+
 - [Go](https://go.dev/) 1.24+
-- [Node.js](https://nodejs.org/)
-- [Wails CLI](https://wails.io/docs/gettingstarted/installation)（選用，用於 `wails dev`）
+- [Node.js](https://nodejs.org/)（用於建置前端）
 
-<h3 id="windows原生編譯">Windows（原生編譯） <a href="#目錄">⬆</a></h3>
+**Windows 建置（WSL 交叉編譯）：**
 
-```batch
-build.bat
+```bash
+# go-winres 用於嵌入應用程式圖示
+go install github.com/tc-hib/go-winres@latest
+```
+
+**Linux 建置（原生）：**
+
+```bash
+# Ubuntu/Debian
+sudo apt install gcc pkg-config libgtk-3-dev libwebkit2gtk-4.0-dev
 ```
 
 <h3 id="wsl交叉編譯為-windows">WSL（交叉編譯為 Windows） <a href="#目錄">⬆</a></h3>
 
 ```bash
-# 需要 mingw-w64：sudo apt install gcc-mingw-w64-x86-64
-./build.sh
+./build.sh            # 或：./build.sh windows
+# 輸出：platform/windows/go-book2ocr.exe
+```
+
+<h3 id="linux原生編譯">Linux（原生編譯） <a href="#目錄">⬆</a></h3>
+
+```bash
+./build.sh linux
+# 輸出：platform/linux/go-book2ocr
+```
+
+<h3 id="windows原生編譯">Windows（原生編譯） <a href="#目錄">⬆</a></h3>
+
+```batch
+build.bat
+REM 輸出：platform\windows\go-book2ocr.exe
 ```
 
 <h3 id="開發模式">開發模式 <a href="#目錄">⬆</a></h3>
+
+需要 [Wails CLI](https://wails.io/docs/gettingstarted/installation)。
 
 ```bash
 wails dev
@@ -284,31 +326,41 @@ OCR 分頁需要輸入圖片遵循特定命名格式（由重新命名分頁產�
 
 ```
 go-book2ocr/
-├── main.go              # 應用程式進入點
+├── main.go              # 應用程式進入點（無框視窗）
 ├── app.go               # 核心結構、設定、工作階段、縮圖
 ├── ocr.go               # OCR 流程、Vision API、PDF 生成
 ├── rename.go            # 批次重新命名邏輯、頁碼分配
 ├── convert.go           # 圖片縮放轉檔
 ├── models.go            # 共用資料類型
+├── taskbar_windows.go   # Windows 工作列進度（ITaskbarList3）與圖示
+├── taskbar_stub.go      # 非 Windows 建置的空實作
 ├── CHANGELOG.md         # 版本歷程
 ├── wails.json           # Wails 專案設定
-├── build.bat            # Windows 編譯腳本
-├── build.sh             # WSL 交叉編譯腳本
+├── build.sh             # 快速建置腳本（互動式選單或參數）
+├── build.bat            # Windows 原生編譯腳本
 ├── config.example.json  # 設定檔範例
+├── platform/
+│   ├── windows/
+│   │   ├── winres.json          # go-winres 設定（圖示與 manifest）
+│   │   └── go-book2ocr.exe     # 編譯產出
+│   └── linux/
+│       └── go-book2ocr         # 編譯產出
 ├── build/
-│   └── appicon.png      # 應用程式圖示
+│   ├── appicon.png      # 應用程式圖示
+│   └── windows/         # Windows manifest 與圖示資源
 ├── docs/                # 翻譯版 README
 ├── fonts/               # 放置 CJK 字體檔案
 ├── key/                 # 放置 API 金鑰檔案（已被 git 忽略）
 ├── frontend/
-│   ├── index.html       # 主要 HTML
+│   ├── index.html       # 主要 HTML（自訂標題列）
 │   ├── build.js         # 前端建置腳本
 │   └── src/
-│       ├── main.js      # 分頁切換、設定管理、i18n 初始化
+│       ├── main.js      # 分頁切換、設定管理、i18n、視窗控制
 │       ├── i18n.js      # 國際化（14 種語言）
 │       ├── ocr.js       # OCR 分頁 UI
 │       ├── rename.js    # 重新命名分頁 UI
 │       ├── convert.js   # 轉檔分頁 UI
+│       ├── timer.js     # 計時器類別
 │       ├── theme.js     # 主題切換
 │       └── style.css    # 所有樣式（含 RTL 支援）
 └── output/              # 預設 OCR 輸出目錄（已被 git 忽略）

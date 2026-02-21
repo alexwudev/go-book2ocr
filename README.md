@@ -8,7 +8,7 @@
   English | <a href="docs/README.zh-TW.md">繁體中文</a> | <a href="docs/README.zh-CN.md">简体中文</a> | <a href="docs/README.ja.md">日本語</a>
 </p>
 
-A Windows desktop application for batch OCR processing, built with [Wails](https://wails.io/) (Go backend + Web frontend). It uses the [Google Cloud Vision API](https://cloud.google.com/vision) to recognize text from scanned book pages and outputs searchable PDFs.
+A desktop application for batch OCR processing, built with [Wails](https://wails.io/) (Go backend + Web frontend). It uses the [Google Cloud Vision API](https://cloud.google.com/vision) to recognize text from scanned book pages and outputs searchable PDFs. Supports **Windows** and **Linux**.
 
 <h2 id="table-of-contents">Table of Contents</h2>
 
@@ -94,6 +94,9 @@ A Windows desktop application for batch OCR processing, built with [Wails](https
 - Preserves EXIF orientation
 
 <h3 id="general">General <a href="#table-of-contents">⬆</a></h3>
+- **Custom title bar with progress**: frameless window with a custom title bar that fills with color as OCR/conversion progresses
+- **Windows taskbar progress**: the taskbar button shows real-time progress during OCR and image conversion
+- **Elapsed timer**: live elapsed time during OCR and image conversion; final duration shown on completion
 - **Multi-language UI**: interface available in 14 languages — 繁體中文, 简体中文, English, 日本語, Русский, Deutsch, Italiano, Español, Français, Nederlands, فارسی, Tiếng Việt, Polski, Português
 - Dark / Light theme
 - RTL layout support for Persian
@@ -119,7 +122,7 @@ git clone https://github.com/alexwudev/go-book2ocr.git
 cd go-book2ocr
 build.bat          # on Windows
 # or
-./build.sh         # on WSL (requires mingw-w64)
+./build.sh         # on WSL (interactive menu: Windows or Linux)
 ```
 
 Then follow the same steps 4-6 from Option A.
@@ -171,7 +174,21 @@ This tool is designed for digitizing scanned books. The typical workflow is:
 
 <h2 id="prerequisites">Prerequisites <a href="#table-of-contents">⬆</a></h2>
 
-- **Windows** (the app is built as a Windows desktop application)
+**Windows** (x64):
+
+- Windows 10/11
+- [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (pre-installed on most Windows 10/11 systems)
+
+**Linux** (x64):
+
+- GTK 3 and WebKit2GTK 4.0
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37
+  ```
+
+**Both platforms:**
+
 - **Google Cloud Vision API** credentials (service account JSON key) — see setup below
 - **A CJK-capable font** (required only if you OCR Chinese/Japanese/Korean text) — see setup below
 
@@ -245,24 +262,49 @@ cp config.example.json config.json
 
 <h3 id="requirements">Requirements <a href="#table-of-contents">⬆</a></h3>
 
+**Common (both platforms):**
+
 - [Go](https://go.dev/) 1.24+
-- [Node.js](https://nodejs.org/)
-- [Wails CLI](https://wails.io/docs/gettingstarted/installation) (optional, for `wails dev`)
+- [Node.js](https://nodejs.org/) (for building the frontend)
 
-<h3 id="windows-native">Windows (native) <a href="#table-of-contents">⬆</a></h3>
+**Windows build (WSL cross-compile):**
 
-```batch
-build.bat
+```bash
+# go-winres for embedding the app icon
+go install github.com/tc-hib/go-winres@latest
+```
+
+**Linux build (native):**
+
+```bash
+# Ubuntu/Debian
+sudo apt install gcc pkg-config libgtk-3-dev libwebkit2gtk-4.0-dev
 ```
 
 <h3 id="wsl-cross-compile-to-windows">WSL (cross-compile to Windows) <a href="#table-of-contents">⬆</a></h3>
 
 ```bash
-# Requires mingw-w64: sudo apt install gcc-mingw-w64-x86-64
-./build.sh
+./build.sh            # or: ./build.sh windows
+# Output: platform/windows/go-book2ocr.exe
 ```
 
-<h3 id="development-mode">Development mode <a href="#table-of-contents">⬆</a></h3>
+<h3 id="linux-native">Linux (native) <a href="#table-of-contents">⬆</a></h3>
+
+```bash
+./build.sh linux
+# Output: platform/linux/go-book2ocr
+```
+
+<h3 id="windows-native">Windows (native) <a href="#table-of-contents">⬆</a></h3>
+
+```batch
+build.bat
+REM Output: platform\windows\go-book2ocr.exe
+```
+
+<h3 id="development-mode">Development Mode <a href="#table-of-contents">⬆</a></h3>
+
+Requires [Wails CLI](https://wails.io/docs/gettingstarted/installation).
 
 ```bash
 wails dev
@@ -284,31 +326,41 @@ The OCR tab expects input images to follow a specific naming pattern (produced b
 
 ```
 go-book2ocr/
-├── main.go              # App entry point
+├── main.go              # App entry point (frameless window)
 ├── app.go               # Core app struct, config, session, thumbnails
 ├── ocr.go               # OCR pipeline, Vision API, PDF generation
 ├── rename.go            # Batch rename logic, page numbering
 ├── convert.go           # Image resize/conversion
 ├── models.go            # Shared data types
+├── taskbar_windows.go   # Windows taskbar progress (ITaskbarList3) & icon
+├── taskbar_stub.go      # No-op stub for non-Windows builds
 ├── CHANGELOG.md         # Version history
 ├── wails.json           # Wails project config
-├── build.bat            # Windows build script
-├── build.sh             # WSL cross-compile script
+├── build.sh             # Quickstart build script (interactive menu or argument)
+├── build.bat            # Windows native build script
 ├── config.example.json  # Example configuration
+├── platform/
+│   ├── windows/
+│   │   ├── winres.json          # go-winres config (icon & manifest)
+│   │   └── go-book2ocr.exe     # Build output
+│   └── linux/
+│       └── go-book2ocr         # Build output
 ├── build/
-│   └── appicon.png      # App icon
+│   ├── appicon.png      # App icon
+│   └── windows/         # Windows manifest & icon resources
 ├── docs/                # Translated READMEs
 ├── fonts/               # Place CJK font files here
 ├── key/                 # Place API key files here (git-ignored)
 ├── frontend/
-│   ├── index.html       # Main HTML
+│   ├── index.html       # Main HTML (custom title bar)
 │   ├── build.js         # Frontend build script
 │   └── src/
-│       ├── main.js      # Tab switching, config, i18n init
+│       ├── main.js      # Tab switching, config, i18n, window controls
 │       ├── i18n.js      # Internationalization (14 languages)
 │       ├── ocr.js       # OCR tab UI
 │       ├── rename.js    # Rename tab UI
 │       ├── convert.js   # Convert tab UI
+│       ├── timer.js     # Elapsed timer class
 │       ├── theme.js     # Theme toggling
 │       └── style.css    # All styles (incl. RTL support)
 └── output/              # Default OCR output directory (git-ignored)

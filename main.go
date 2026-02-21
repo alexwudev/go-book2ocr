@@ -16,9 +16,12 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:  "OCR Tool",
-		Width:  960,
-		Height: 680,
+		Title:     "OCR Tool",
+		Width:     960,
+		Height:    680,
+		MinWidth:  800,
+		MinHeight: 500,
+		Frameless: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

@@ -45,6 +45,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.loadConfig()
 	a.loadSession()
+	initTaskbar()
 }
 
 // --- Path helpers ---

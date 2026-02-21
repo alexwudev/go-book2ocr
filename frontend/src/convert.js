@@ -1,5 +1,7 @@
 import { t } from './i18n.js';
+import { Timer } from './timer.js';
 
+const convertTimer = new Timer('convert-elapsed');
 let App = null;
 let Runtime = null;
 let convertDir = '';
@@ -47,6 +49,17 @@ async function setupConvertEvents() {
             const pct = Math.round(data.percent * 100);
             bar.style.width = pct + '%';
             text.textContent = `${data.current} / ${data.total} (${pct}%)`;
+
+            // Update title bar fill
+            const titlebarFill = document.getElementById('titlebar-fill');
+            const titlebarTitle = document.getElementById('titlebar-title');
+            if (titlebarFill) {
+                titlebarFill.style.width = pct + '%';
+                titlebarFill.classList.toggle('done', pct >= 100);
+            }
+            if (titlebarTitle && pct > 0 && pct < 100) {
+                titlebarTitle.textContent = `${pct}% - OCR Tool`;
+            }
         });
 
         runtime.EventsOn('convert:log', (data) => {
@@ -64,6 +77,19 @@ async function setupConvertEvents() {
         runtime.EventsOn('convert:finished', async () => {
             document.getElementById('start-convert-btn').disabled = false;
             document.getElementById('stop-convert-btn').disabled = true;
+
+            // Stop timer
+            convertTimer.stop();
+
+            // Reset title bar
+            const titlebarFill = document.getElementById('titlebar-fill');
+            const titlebarTitle = document.getElementById('titlebar-title');
+            if (titlebarFill) {
+                titlebarFill.style.width = '0%';
+                titlebarFill.classList.remove('done');
+            }
+            if (titlebarTitle) titlebarTitle.textContent = 'OCR Tool';
+
             // Reload metadata to show updated file sizes
             if (convertDir) {
                 await loadConvertFileList(convertDir);
@@ -137,6 +163,15 @@ async function startConvert() {
     document.getElementById('convert-progress-text').textContent = '0 / 0';
     document.getElementById('start-convert-btn').disabled = true;
     document.getElementById('stop-convert-btn').disabled = false;
+
+    // Start timer and reset title bar
+    convertTimer.reset();
+    convertTimer.start();
+    const titlebarFill = document.getElementById('titlebar-fill');
+    if (titlebarFill) {
+        titlebarFill.style.width = '0%';
+        titlebarFill.classList.remove('done');
+    }
 
     try {
         const app = await getApp();

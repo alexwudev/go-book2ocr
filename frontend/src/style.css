@@ -90,6 +90,99 @@ body {
     --wails-draggable: no-drag;
 }
 
+/* ===== Custom Title Bar ===== */
+.titlebar {
+    position: relative;
+    height: 32px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    user-select: none;
+    overflow: hidden;
+}
+.titlebar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: rgba(59, 130, 246, 0.3);
+    transition: width 0.3s;
+    pointer-events: none;
+}
+.titlebar-fill.done {
+    background: rgba(34, 197, 94, 0.25);
+}
+[data-theme="dark"] .titlebar {
+    background: #0a0a14;
+}
+[data-theme="dark"] .titlebar-fill {
+    background: rgba(91, 156, 246, 0.25);
+}
+[data-theme="dark"] .titlebar-fill.done {
+    background: rgba(34, 197, 94, 0.2);
+}
+.titlebar-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-left: 12px;
+}
+.titlebar-title {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+.titlebar-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    margin-right: 4px;
+}
+.titlebar-lang {
+    padding: 2px 4px;
+    font-size: 11px;
+    height: 22px;
+    max-width: 120px;
+}
+.titlebar-btns {
+    display: flex;
+    height: 100%;
+}
+.tb-btn {
+    width: 46px;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+}
+.tb-btn:hover {
+    background: rgba(128,128,128,0.2);
+    color: var(--text-primary);
+}
+.tb-close:hover {
+    background: #c42b1c;
+    color: #fff;
+}
+
+/* ===== Elapsed Timer ===== */
+.elapsed-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 40px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
 /* ===== Top Progress Bar (OCR) ===== */
 .top-progress {
     position: relative;
@@ -859,6 +952,15 @@ input[type="checkbox"] {
 }
 
 /* ===== RTL Support ===== */
+[dir="rtl"] .titlebar-content {
+    flex-direction: row-reverse;
+    padding-left: 0;
+    padding-right: 12px;
+}
+[dir="rtl"] .titlebar-controls {
+    margin-left: 4px;
+    margin-right: auto;
+}
 [dir="rtl"] .form-row label {
     text-align: left;
 }

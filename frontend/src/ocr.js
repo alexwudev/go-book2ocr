@@ -1,6 +1,8 @@
 import { t } from './i18n.js';
+import { Timer } from './timer.js';
 
 const MAX_LOG_LINES = 500;
+const ocrTimer = new Timer('ocr-elapsed');
 let logLines = [];
 let ocrImageDir = '';
 let ocrOutputDir = '';
@@ -123,9 +125,21 @@ async function setupOCREvents() {
             document.getElementById('stop-ocr-btn').disabled = true;
             appendLog({ message: t('msg.processingComplete'), isError: false, filename: '' });
 
+            // Stop timer
+            ocrTimer.stop();
+
             // Hide top progress bar
             const topProgress = document.getElementById('top-progress');
             if (topProgress) topProgress.classList.add('hidden');
+
+            // Reset title bar
+            const titlebarFill = document.getElementById('titlebar-fill');
+            const titlebarTitle = document.getElementById('titlebar-title');
+            if (titlebarFill) {
+                titlebarFill.style.width = '0%';
+                titlebarFill.classList.remove('done');
+            }
+            if (titlebarTitle) titlebarTitle.textContent = 'OCR Tool';
         });
     } catch (e) {
         console.error('Failed to setup events:', e);
@@ -147,6 +161,17 @@ function updateProgressBar(percent, current, total) {
         topProgress.classList.remove('hidden');
         topBar.style.width = pct + '%';
         topText.textContent = `OCR ${pct}%  (${current} / ${total})`;
+    }
+
+    // Update title bar fill
+    const titlebarFill = document.getElementById('titlebar-fill');
+    const titlebarTitle = document.getElementById('titlebar-title');
+    if (titlebarFill) {
+        titlebarFill.style.width = pct + '%';
+        titlebarFill.classList.toggle('done', pct >= 100);
+    }
+    if (titlebarTitle && pct > 0 && pct < 100) {
+        titlebarTitle.textContent = `${pct}% - OCR Tool`;
     }
 }
 
@@ -293,12 +318,23 @@ async function startOCR() {
     document.getElementById('start-ocr-btn').disabled = true;
     document.getElementById('stop-ocr-btn').disabled = false;
 
+    // Start timer
+    ocrTimer.reset();
+    ocrTimer.start();
+
     // Reset top progress bar
     const topProgress = document.getElementById('top-progress');
     if (topProgress) {
         topProgress.classList.remove('hidden');
         document.getElementById('top-progress-bar').style.width = '0%';
         document.getElementById('top-progress-text').textContent = 'OCR 0%';
+    }
+
+    // Reset title bar fill
+    const titlebarFill = document.getElementById('titlebar-fill');
+    if (titlebarFill) {
+        titlebarFill.style.width = '0%';
+        titlebarFill.classList.remove('done');
     }
 
     // Start OCR

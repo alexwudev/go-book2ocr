@@ -8,6 +8,8 @@ export namespace main {
 	    mergePdf: boolean;
 	    mergeFilename: string;
 	    theme: string;
+	    scanMode: string;
+	    uiLang: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppConfig(source);
@@ -22,6 +24,8 @@ export namespace main {
 	        this.mergePdf = source["mergePdf"];
 	        this.mergeFilename = source["mergeFilename"];
 	        this.theme = source["theme"];
+	        this.scanMode = source["scanMode"];
+	        this.uiLang = source["uiLang"];
 	    }
 	}
 	export class ImageInfo {
@@ -30,6 +34,7 @@ export namespace main {
 	    index: number;
 	    pageType: string;
 	    isRoman: boolean;
+	    leftPageOverride: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new ImageInfo(source);
@@ -42,6 +47,27 @@ export namespace main {
 	        this.index = source["index"];
 	        this.pageType = source["pageType"];
 	        this.isRoman = source["isRoman"];
+	        this.leftPageOverride = source["leftPageOverride"];
+	    }
+	}
+	export class ImageMetadata {
+	    path: string;
+	    name: string;
+	    width: number;
+	    height: number;
+	    fileSize: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImageMetadata(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.name = source["name"];
+	        this.width = source["width"];
+	        this.height = source["height"];
+	        this.fileSize = source["fileSize"];
 	    }
 	}
 	export class LangOption {
@@ -66,6 +92,7 @@ export namespace main {
 	    concurrency: number;
 	    mergePdf: boolean;
 	    mergeFilename: string;
+	    scanMode: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new OCRSettings(source);
@@ -80,6 +107,7 @@ export namespace main {
 	        this.concurrency = source["concurrency"];
 	        this.mergePdf = source["mergePdf"];
 	        this.mergeFilename = source["mergeFilename"];
+	        this.scanMode = source["scanMode"];
 	    }
 	}
 	export class RenamePreview {
@@ -110,6 +138,7 @@ export namespace main {
 	    concurrency: number;
 	    mergePdf: boolean;
 	    mergeFilename: string;
+	    scanMode: string;
 	    totalFiles: number;
 	    processedFiles: string[];
 	
@@ -126,6 +155,7 @@ export namespace main {
 	        this.concurrency = source["concurrency"];
 	        this.mergePdf = source["mergePdf"];
 	        this.mergeFilename = source["mergeFilename"];
+	        this.scanMode = source["scanMode"];
 	        this.totalFiles = source["totalFiles"];
 	        this.processedFiles = source["processedFiles"];
 	    }

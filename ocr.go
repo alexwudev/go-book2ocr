@@ -53,6 +53,7 @@ func (a *App) StartOCR(settings OCRSettings) string {
 			a.cancelOCR = nil
 			a.mu.Unlock()
 			wailsRuntime.WindowSetTitle(a.ctx, "OCR Tool")
+			setTaskbarProgress(0)
 			wailsRuntime.EventsEmit(a.ctx, "ocr:finished", nil)
 		}()
 		a.runOCRPipeline(ctx, settings)
@@ -95,8 +96,9 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 			Total:   total,
 			Percent: pct,
 		})
-		// Update window title with progress
+		// Update window title and taskbar with progress
 		wailsRuntime.WindowSetTitle(a.ctx, fmt.Sprintf("OCR Tool — %d%% (%d/%d)", int(pct*100), current, total))
+		setTaskbarProgress(pct * 100)
 	}
 
 	// Create output directory

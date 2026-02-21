@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.2.0 — 2026-02-21
+
+### New Features
+
+- **Custom title bar with progress fill**: frameless window with a custom title bar that fills with color as OCR/conversion progresses
+- **Windows taskbar progress**: the taskbar button shows real-time progress during OCR and image conversion (ITaskbarList3)
+- **Elapsed timer**: live elapsed time display during OCR and image conversion; final duration shown on completion
+- **Linux support**: the app now builds and runs natively on Linux (x64) with GTK 3 + WebKit2GTK
+
+### Changes
+
+- Window is now frameless with custom minimize/maximize/close buttons and drag support
+- Language selector and theme toggle moved from tab bar to title bar
+- Build scripts rewritten: `build.sh` now supports interactive menu (`1=Windows`, `2=Linux`) or argument (`./build.sh windows` / `./build.sh linux`)
+- Windows build no longer requires mingw-w64 (uses `CGO_ENABLED=0`)
+- Build output now goes to `platform/windows/` and `platform/linux/` directories
+- Added `platform/windows/winres.json` for go-winres icon embedding
+- Added Windows icon (`build/windows/icon.ico`) and DPI-aware manifest
+
 ## v1.1.0 — 2026-02-18
 
 ### New Features

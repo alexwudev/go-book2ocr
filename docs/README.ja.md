@@ -8,7 +8,7 @@
   <a href="../README.md">English</a> | <a href="README.zh-TW.md">繁體中文</a> | <a href="README.zh-CN.md">简体中文</a> | 日本語
 </p>
 
-Windows 向けのバッチ OCR 処理デスクトップアプリケーションです。[Wails](https://wails.io/)（Go バックエンド + Web フロントエンド）で構築されており、[Google Cloud Vision API](https://cloud.google.com/vision) を使用してスキャンした書籍ページからテキストを認識し、検索可能な PDF を出力します。
+バッチ OCR 処理用のデスクトップアプリケーションです。[Wails](https://wails.io/)（Go バックエンド + Web フロントエンド）で構築されており、[Google Cloud Vision API](https://cloud.google.com/vision) を使用してスキャンした書籍ページからテキストを認識し、検索可能な PDF を出力します。**Windows** と **Linux** に対応しています。
 
 **ユースケース**
 - 書籍、雑誌、歴史的文書をスキャンまたは撮影してデジタル化
@@ -101,6 +101,9 @@ Windows 向けのバッチ OCR 処理デスクトップアプリケーション�
 - EXIF の向き情報を保持
 
 <h3 id="全般">全般 <a href="#目次">⬆</a></h3>
+- **カスタムタイトルバーと進捗表示**：フレームレスウィンドウにカスタムタイトルバーを搭載し、OCR／変換の進行に合わせてタイトルバーが色で塗りつぶされます
+- **Windows タスクバー進捗**：OCR および画像変換時にタスクバーボタンでリアルタイムの進捗を表示
+- **経過時間タイマー**：OCR および画像変換時に経過時間をリアルタイム表示、完了時に最終所要時間を表示
 - **多言語 UI**：14言語に対応 — 繁體中文、简体中文、English、日本語、Русский、Deutsch、Italiano、Español、Français、Nederlands、فارسی、Tiếng Việt、Polski、Português
 - ダーク／ライトテーマ切り替え
 - ペルシア語向け RTL レイアウト対応
@@ -126,7 +129,7 @@ git clone https://github.com/alexwudev/go-book2ocr.git
 cd go-book2ocr
 build.bat          # Windows 環境
 # または
-./build.sh         # WSL 環境（mingw-w64 が必要）
+./build.sh         # WSL 環境（対話式メニュー：Windows または Linux）
 ```
 
 その後、方法 A の手順 4〜6 に従ってください。
@@ -178,7 +181,21 @@ build.bat          # Windows 環境
 
 <h2 id="前提条件">前提条件 <a href="#目次">⬆</a></h2>
 
-- **Windows**（本アプリは Windows デスクトップアプリケーションとしてビルドされています）
+**Windows**（x64）：
+
+- Windows 10/11
+- [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)（ほとんどの Windows 10/11 にプリインストール済み）
+
+**Linux**（x64）：
+
+- GTK 3 と WebKit2GTK 4.0
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37
+  ```
+
+**両プラットフォーム共通：**
+
 - **Google Cloud Vision API** の認証情報（サービスアカウント JSON キー）— 下記のセットアップを参照
 - **CJK 対応フォント**（中国語・日本語・韓国語のテキストを OCR する場合のみ必要）— 下記のセットアップを参照
 
@@ -252,24 +269,49 @@ cp config.example.json config.json
 
 <h3 id="必要環境">必要環境 <a href="#目次">⬆</a></h3>
 
+**共通（両プラットフォーム）：**
+
 - [Go](https://go.dev/) 1.24+
-- [Node.js](https://nodejs.org/)
-- [Wails CLI](https://wails.io/docs/gettingstarted/installation)（任意、`wails dev` 用）
+- [Node.js](https://nodejs.org/)（フロントエンドのビルドに必要）
 
-<h3 id="windowsネイティブ">Windows（ネイティブ） <a href="#目次">⬆</a></h3>
+**Windows ビルド（WSL クロスコンパイル）：**
 
-```batch
-build.bat
+```bash
+# go-winres でアプリアイコンを埋め込み
+go install github.com/tc-hib/go-winres@latest
+```
+
+**Linux ビルド（ネイティブ）：**
+
+```bash
+# Ubuntu/Debian
+sudo apt install gcc pkg-config libgtk-3-dev libwebkit2gtk-4.0-dev
 ```
 
 <h3 id="wslwindows-向けクロスコンパイル">WSL（Windows 向けクロスコンパイル） <a href="#目次">⬆</a></h3>
 
 ```bash
-# mingw-w64 が必要：sudo apt install gcc-mingw-w64-x86-64
-./build.sh
+./build.sh            # または：./build.sh windows
+# 出力：platform/windows/go-book2ocr.exe
+```
+
+<h3 id="linuxネイティブ">Linux（ネイティブ） <a href="#目次">⬆</a></h3>
+
+```bash
+./build.sh linux
+# 出力：platform/linux/go-book2ocr
+```
+
+<h3 id="windowsネイティブ">Windows（ネイティブ） <a href="#目次">⬆</a></h3>
+
+```batch
+build.bat
+REM 出力：platform\windows\go-book2ocr.exe
 ```
 
 <h3 id="開発モード">開発モード <a href="#目次">⬆</a></h3>
+
+[Wails CLI](https://wails.io/docs/gettingstarted/installation) が必要です。
 
 ```bash
 wails dev
@@ -291,34 +333,44 @@ OCR タブでは、入力画像が特定の命名パターンに従っている�
 
 ```
 go-book2ocr/
-├── main.go              # App entry point
-├── app.go               # Core app struct, config, session, thumbnails
-├── ocr.go               # OCR pipeline, Vision API, PDF generation
-├── rename.go            # Batch rename logic, page numbering
-├── convert.go           # Image resize/conversion
-├── models.go            # Shared data types
-├── CHANGELOG.md         # Version history
-├── wails.json           # Wails project config
-├── build.bat            # Windows build script
-├── build.sh             # WSL cross-compile script
-├── config.example.json  # Example configuration
+├── main.go              # アプリエントリーポイント（フレームレスウィンドウ）
+├── app.go               # コアアプリ構造体、設定、セッション、サムネイル
+├── ocr.go               # OCR パイプライン、Vision API、PDF 生成
+├── rename.go            # 一括リネームロジック、ページ番号付与
+├── convert.go           # 画像リサイズ／変換
+├── models.go            # 共有データ型
+├── taskbar_windows.go   # Windows タスクバー進捗（ITaskbarList3）とアイコン
+├── taskbar_stub.go      # 非 Windows ビルド用スタブ
+├── CHANGELOG.md         # バージョン履歴
+├── wails.json           # Wails プロジェクト設定
+├── build.sh             # クイックスタートビルドスクリプト（対話式メニューまたは引数）
+├── build.bat            # Windows ネイティブビルドスクリプト
+├── config.example.json  # 設定ファイルのサンプル
+├── platform/
+│   ├── windows/
+│   │   ├── winres.json          # go-winres 設定（アイコンとマニフェスト）
+│   │   └── go-book2ocr.exe     # ビルド出力
+│   └── linux/
+│       └── go-book2ocr         # ビルド出力
 ├── build/
-│   └── appicon.png      # App icon
-├── docs/                # Translated READMEs
-├── fonts/               # Place CJK font files here
-├── key/                 # Place API key files here (git-ignored)
+│   ├── appicon.png      # アプリアイコン
+│   └── windows/         # Windows マニフェストとアイコンリソース
+├── docs/                # 翻訳版 README
+├── fonts/               # CJK フォントファイル配置用
+├── key/                 # API キーファイル配置用（git 管理対象外）
 ├── frontend/
-│   ├── index.html       # Main HTML
-│   ├── build.js         # Frontend build script
+│   ├── index.html       # メイン HTML（カスタムタイトルバー）
+│   ├── build.js         # フロントエンドビルドスクリプト
 │   └── src/
-│       ├── main.js      # Tab switching, config, i18n init
-│       ├── i18n.js      # Internationalization (14 languages)
-│       ├── ocr.js       # OCR tab UI
-│       ├── rename.js    # Rename tab UI
-│       ├── convert.js   # Convert tab UI
-│       ├── theme.js     # Theme toggling
-│       └── style.css    # All styles (incl. RTL support)
-└── output/              # Default OCR output directory (git-ignored)
+│       ├── main.js      # タブ切替、設定管理、i18n、ウィンドウ操作
+│       ├── i18n.js      # 国際化（14言語）
+│       ├── ocr.js       # OCR タブ UI
+│       ├── rename.js    # リネームタブ UI
+│       ├── convert.js   # 変換タブ UI
+│       ├── timer.js     # 経過時間タイマークラス
+│       ├── theme.js     # テーマ切替
+│       └── style.css    # 全スタイル（RTL 対応含む）
+└── output/              # デフォルト OCR 出力ディレクトリ（git 管理対象外）
 ```
 
 <h2 id="ライセンス">ライセンス <a href="#目次">⬆</a></h2>

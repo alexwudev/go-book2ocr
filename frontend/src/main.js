@@ -18,6 +18,16 @@ async function init() {
         return;
     }
 
+    // Wire up title bar window controls
+    try {
+        const { WindowMinimise, WindowToggleMaximise, Quit } = await import('../wailsjs/runtime/runtime.js');
+        document.getElementById('tb-minimize').addEventListener('click', () => WindowMinimise());
+        document.getElementById('tb-maximize').addEventListener('click', () => WindowToggleMaximise());
+        document.getElementById('tb-close').addEventListener('click', () => Quit());
+    } catch (e) {
+        console.error('Failed to wire window controls:', e);
+    }
+
     // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));

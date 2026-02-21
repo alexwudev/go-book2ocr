@@ -1,25 +1,96 @@
 #!/bin/bash
-# Build script for WSL cross-compilation to Windows
+# OCR Tool — Quickstart Build Script
+# Usage: ./build.sh [windows|linux]
 cd "$(dirname "$0")"
 
-# Load nvm for Node.js
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-echo "=== Generating Wails bindings ==="
-~/go/bin/wails generate module
+TARGET="$1"
 
+if [ -z "$TARGET" ]; then
+    echo ""
+    echo "  OCR Tool Build Script"
+    echo "  ====================="
+    echo "  1) Windows (x64)"
+    echo "  2) Linux   (x64)"
+    echo ""
+    read -p "  Select target platform [1/2]: " choice
+    case $choice in
+        1) TARGET=windows ;;
+        2) TARGET=linux ;;
+        *) echo "  Invalid choice"; exit 1 ;;
+    esac
+fi
+
+echo ""
+echo "=== Generating Wails bindings ==="
+WINRES=""
+if command -v wails &> /dev/null; then
+    wails generate module
+elif [ -f ~/go/bin/wails ]; then
+    ~/go/bin/wails generate module
+else
+    echo "wails CLI not found, skipping binding generation"
+fi
+
+echo ""
 echo "=== Building frontend ==="
 cd frontend && node build.js && cd ..
+if [ $? -ne 0 ]; then
+    echo "Frontend build failed!"
+    exit 1
+fi
 
-echo "=== Building Windows exe ==="
-CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc \
-    go build -tags desktop,production -ldflags "-H windowsgui" -o go-book2ocr.exe .
+if [ "$TARGET" = "windows" ]; then
+    echo ""
+    echo "=== Embedding icon resource ==="
+    if command -v go-winres &> /dev/null; then
+        WINRES="go-winres"
+    elif [ -f ~/go/bin/go-winres ]; then
+        WINRES="${HOME}/go/bin/go-winres"
+    fi
 
-if [ $? -eq 0 ]; then
-    echo "Build OK! -> go-book2ocr.exe"
-    ls -lh go-book2ocr.exe
+    if [ -n "$WINRES" ]; then
+        $WINRES make --in platform/windows/winres.json \
+            --product-version 1.0.0.0 --file-version 1.0.0.0
+    else
+        echo "go-winres not found, skipping icon embed"
+    fi
+
+    echo ""
+    echo "=== Building Windows executable ==="
+    CGO_ENABLED=0 GOOS=windows GOARCH=amd64 \
+        go build -tags desktop,production -ldflags "-s -w -H windowsgui" -o go-book2ocr.exe .
+
+    if [ $? -eq 0 ]; then
+        mv go-book2ocr.exe platform/windows/
+        rm -f rsrc_windows_amd64.syso
+        echo ""
+        echo "Build complete!"
+        ls -lh platform/windows/go-book2ocr.exe
+    else
+        echo "Build FAILED!"
+        exit 1
+    fi
+
+elif [ "$TARGET" = "linux" ]; then
+    echo ""
+    echo "=== Building Linux executable ==="
+    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
+        go build -tags desktop,production -ldflags "-s -w" -o go-book2ocr .
+
+    if [ $? -eq 0 ]; then
+        mv go-book2ocr platform/linux/
+        echo ""
+        echo "Build complete!"
+        ls -lh platform/linux/go-book2ocr
+    else
+        echo "Build FAILED!"
+        exit 1
+    fi
+
 else
-    echo "Build FAILED!"
+    echo "Unknown target: $TARGET"
     exit 1
 fi

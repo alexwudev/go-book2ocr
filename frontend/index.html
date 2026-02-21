@@ -7,6 +7,31 @@
     <link rel="stylesheet" href="./src/style.css">
 </head>
 <body>
+    <!-- Custom title bar (frameless window) -->
+    <div id="titlebar" class="titlebar" style="--wails-draggable: drag">
+        <div id="titlebar-fill" class="titlebar-fill"></div>
+        <div class="titlebar-content">
+            <span id="titlebar-title" class="titlebar-title">OCR Tool</span>
+            <div class="titlebar-controls" style="--wails-draggable: no-drag">
+                <select id="ui-lang-select" class="lang-select titlebar-lang" title="Language"></select>
+                <button id="theme-toggle" class="tb-btn" data-i18n-title="tooltip.toggleTheme" title="切換主題">
+                    <span id="theme-icon">&#9790;</span>
+                </button>
+            </div>
+            <div class="titlebar-btns" style="--wails-draggable: no-drag">
+                <button id="tb-minimize" class="tb-btn" title="Minimize">
+                    <svg width="10" height="1" viewBox="0 0 10 1"><line x1="0" y1="0.5" x2="10" y2="0.5" stroke="currentColor" stroke-width="1"/></svg>
+                </button>
+                <button id="tb-maximize" class="tb-btn" title="Maximize">
+                    <svg width="10" height="10" viewBox="0 0 10 10"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+                </button>
+                <button id="tb-close" class="tb-btn tb-close" title="Close">
+                    <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1.2"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.2"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Top progress bar (shown during OCR) -->
     <div id="top-progress" class="top-progress hidden">
         <div id="top-progress-bar" class="top-progress-fill"></div>
@@ -25,11 +50,6 @@
         <button class="tab-btn active" data-tab="rename" data-i18n="tab.rename">批次重新命名</button>
         <button class="tab-btn" data-tab="ocr" data-i18n="tab.ocr">批次 OCR</button>
         <button class="tab-btn" data-tab="convert" data-i18n="tab.convert">圖片轉檔</button>
-        <div class="spacer"></div>
-        <select id="ui-lang-select" class="lang-select" title="Language"></select>
-        <button id="theme-toggle" class="btn btn-icon" data-i18n-title="tooltip.toggleTheme" title="切換主題">
-            <span id="theme-icon">&#9790;</span>
-        </button>
     </nav>
 
     <!-- Tab 1: Batch Rename -->
@@ -142,6 +162,7 @@
                 <div class="progress-bar-container">
                     <div id="progress-bar" class="progress-bar"></div>
                 </div>
+                <span id="ocr-elapsed" class="elapsed-text"></span>
                 <span id="progress-text" class="progress-text">0 / 0</span>
             </div>
             <div id="log-area" class="log-area"></div>
@@ -174,6 +195,7 @@
                 <div class="progress-bar-container">
                     <div id="convert-progress-bar" class="progress-bar"></div>
                 </div>
+                <span id="convert-elapsed" class="elapsed-text"></span>
                 <span id="convert-progress-text" class="progress-text">0 / 0</span>
             </div>
 

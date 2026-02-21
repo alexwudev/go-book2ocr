@@ -26,12 +26,12 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
-export function GetImageMetadataList(arg1) {
-  return window['go']['main']['App']['GetImageMetadataList'](arg1);
-}
-
 export function GetDefaultOutputDir(arg1) {
   return window['go']['main']['App']['GetDefaultOutputDir'](arg1);
+}
+
+export function GetImageMetadataList(arg1) {
+  return window['go']['main']['App']['GetImageMetadataList'](arg1);
 }
 
 export function GetImageThumbnail(arg1, arg2) {
