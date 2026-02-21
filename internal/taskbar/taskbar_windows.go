@@ -1,6 +1,6 @@
 //go:build windows
 
-package main
+package taskbar
 
 import (
 	"os"
@@ -68,7 +68,7 @@ const (
 
 var taskbarCh chan float64
 
-func initTaskbar() {
+func Init() {
 	taskbarCh = make(chan float64, 16)
 	go taskbarWorker()
 }
@@ -94,7 +94,6 @@ func taskbarWorker() {
 	// Set window icon from exe resources
 	hModule, _, _ := procGetModuleHandleW.Call(0)
 	if hModule != 0 {
-		// go-winres uses resource name "APP" for the icon group
 		appName, _ := syscall.UTF16PtrFromString("APP")
 		hIcon, _, _ := procLoadIconW.Call(hModule, uintptr(unsafe.Pointer(appName)))
 		if hIcon != 0 {
@@ -151,7 +150,7 @@ func findWindowByPID(targetPID uint32) uintptr {
 	return result
 }
 
-func setTaskbarProgress(percent float64) {
+func SetProgress(percent float64) {
 	if taskbarCh != nil {
 		select {
 		case taskbarCh <- percent:

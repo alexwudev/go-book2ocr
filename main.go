@@ -4,6 +4,8 @@ import (
 	"embed"
 	"log"
 
+	"book2ocr/internal/app"
+
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -13,7 +15,7 @@ import (
 var assets embed.FS
 
 func main() {
-	app := NewApp()
+	a := app.NewApp()
 
 	err := wails.Run(&options.App{
 		Title:     "OCR Tool",
@@ -26,9 +28,9 @@ func main() {
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 26, G: 26, B: 46, A: 1},
-		OnStartup:        app.startup,
+		OnStartup:        a.Startup,
 		Bind: []interface{}{
-			app,
+			a,
 		},
 	})
 

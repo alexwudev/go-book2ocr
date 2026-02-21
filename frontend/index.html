@@ -13,7 +13,6 @@
         <div class="titlebar-content">
             <span id="titlebar-title" class="titlebar-title">OCR Tool</span>
             <div class="titlebar-controls" style="--wails-draggable: no-drag">
-                <select id="ui-lang-select" class="lang-select titlebar-lang" title="Language"></select>
                 <button id="theme-toggle" class="tb-btn" data-i18n-title="tooltip.toggleTheme" title="切換主題">
                     <span id="theme-icon">&#9790;</span>
                 </button>
@@ -50,6 +49,8 @@
         <button class="tab-btn active" data-tab="rename" data-i18n="tab.rename">批次重新命名</button>
         <button class="tab-btn" data-tab="ocr" data-i18n="tab.ocr">批次 OCR</button>
         <button class="tab-btn" data-tab="convert" data-i18n="tab.convert">圖片轉檔</button>
+        <div class="tab-bar-spacer"></div>
+        <select id="ui-lang-select" class="lang-select" title="Language"></select>
     </nav>
 
     <!-- Tab 1: Batch Rename -->
@@ -90,6 +91,18 @@
                 <div class="button-row">
                     <button id="preview-rename-btn" class="btn btn-primary" data-i18n="btn.previewRename">預覽命名結果</button>
                     <button id="execute-rename-btn" class="btn btn-success" disabled data-i18n="btn.executeRename">執行重新命名</button>
+                </div>
+            </div>
+
+            <div class="batch-action-bar" id="batch-action-bar">
+                <label class="batch-checkbox-label">
+                    <input type="checkbox" id="batch-select-all">
+                    <span data-i18n="label.selectAll">全選</span>
+                    <span id="batch-count" class="batch-count"></span>
+                </label>
+                <div class="batch-apply-group">
+                    <select id="batch-type-select" class="page-type-select"></select>
+                    <button id="batch-apply-btn" class="btn btn-secondary" data-i18n="btn.batchApply">套用</button>
                 </div>
             </div>
 

@@ -11,7 +11,7 @@ async function init() {
     let App;
     try {
         log(t('status.loadingBindings'), false);
-        App = await import('../wailsjs/go/main/App.js');
+        App = await import('../wailsjs/go/app/App.js');
         log(t('status.bindingsLoaded'), false);
     } catch (e) {
         log(t('msg.bindingsLoadFailed') + e, true);

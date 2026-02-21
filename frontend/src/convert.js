@@ -8,7 +8,7 @@ let convertDir = '';
 
 async function getApp() {
     if (!App) {
-        App = await import('../wailsjs/go/main/App.js');
+        App = await import('../wailsjs/go/app/App.js');
     }
     return App;
 }

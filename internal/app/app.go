@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"bytes"
@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"book2ocr/internal/taskbar"
 
 	"github.com/nfnt/resize"
 	"github.com/rwcarlsen/goexif/exif"
@@ -40,12 +42,12 @@ func NewApp() *App {
 	}
 }
 
-// startup is called when the app starts
-func (a *App) startup(ctx context.Context) {
+// Startup is called when the app starts
+func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	a.loadConfig()
 	a.loadSession()
-	initTaskbar()
+	taskbar.Init()
 }
 
 // --- Path helpers ---
@@ -71,7 +73,6 @@ func (a *App) sessionPath() string {
 func (a *App) loadConfig() {
 	data, err := os.ReadFile(a.configPath())
 	if err != nil {
-		// Default config
 		a.config = AppConfig{
 			Languages:     []string{"en"},
 			Concurrency:   5,
@@ -168,7 +169,6 @@ func (a *App) SelectFile(title string, displayName string, pattern string) (stri
 
 // GetImageThumbnail returns a base64 data URL for a resized image
 func (a *App) GetImageThumbnail(path string, maxSize int) (string, error) {
-	// Limit concurrent decoding to avoid memory spikes
 	a.thumbSem <- struct{}{}
 	defer func() { <-a.thumbSem }()
 
@@ -178,7 +178,6 @@ func (a *App) GetImageThumbnail(path string, maxSize int) (string, error) {
 	}
 	defer f.Close()
 
-	// Read EXIF orientation before decoding
 	orientation := 1
 	if ex, err := exif.Decode(f); err == nil {
 		if tag, err := ex.Get(exif.Orientation); err == nil {
@@ -187,7 +186,6 @@ func (a *App) GetImageThumbnail(path string, maxSize int) (string, error) {
 			}
 		}
 	}
-	// Seek back to start for image decode
 	f.Seek(0, io.SeekStart)
 
 	img, format, err := image.Decode(f)
@@ -195,12 +193,10 @@ func (a *App) GetImageThumbnail(path string, maxSize int) (string, error) {
 		return "", fmt.Errorf("decode: %w", err)
 	}
 
-	// Apply EXIF orientation
 	img = applyOrientation(img, orientation)
 
-	// Resize maintaining aspect ratio
 	thumb := resize.Thumbnail(uint(maxSize), uint(maxSize), img, resize.Lanczos3)
-	img = nil // release full-size image immediately
+	img = nil
 
 	var buf bytes.Buffer
 	switch strings.ToLower(format) {
@@ -222,24 +218,25 @@ func (a *App) GetImageThumbnail(path string, maxSize int) (string, error) {
 	return fmt.Sprintf("data:%s;base64,%s", mimeType, b64), nil
 }
 
-// applyOrientation transforms an image based on EXIF orientation tag
+// --- Image orientation helpers ---
+
 func applyOrientation(img image.Image, orientation int) image.Image {
 	switch orientation {
 	case 1:
 		return img
-	case 2: // flip horizontal
+	case 2:
 		return flipH(img)
-	case 3: // rotate 180
+	case 3:
 		return rotate180(img)
-	case 4: // flip vertical
+	case 4:
 		return flipV(img)
-	case 5: // transpose (rotate 90 CW + flip horizontal)
+	case 5:
 		return flipH(rotate90CW(img))
-	case 6: // rotate 90 CW
+	case 6:
 		return rotate90CW(img)
-	case 7: // transverse (rotate 90 CCW + flip horizontal)
+	case 7:
 		return flipH(rotate90CCW(img))
-	case 8: // rotate 90 CCW
+	case 8:
 		return rotate90CCW(img)
 	default:
 		return img
@@ -300,7 +297,6 @@ func flipV(img image.Image) image.Image {
 	}
 	return dst
 }
-
 
 // --- Language options ---
 

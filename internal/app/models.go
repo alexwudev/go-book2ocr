@@ -1,4 +1,4 @@
-package main
+package app
 
 // ImageInfo represents one image file in the rename tab
 type ImageInfo struct {

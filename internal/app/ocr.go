@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"book2ocr/internal/taskbar"
 
 	vision "cloud.google.com/go/vision/v2/apiv1"
 	visionpb "cloud.google.com/go/vision/v2/apiv1/visionpb"
@@ -53,7 +55,7 @@ func (a *App) StartOCR(settings OCRSettings) string {
 			a.cancelOCR = nil
 			a.mu.Unlock()
 			wailsRuntime.WindowSetTitle(a.ctx, "OCR Tool")
-			setTaskbarProgress(0)
+			taskbar.SetProgress(0)
 			wailsRuntime.EventsEmit(a.ctx, "ocr:finished", nil)
 		}()
 		a.runOCRPipeline(ctx, settings)
@@ -96,9 +98,8 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 			Total:   total,
 			Percent: pct,
 		})
-		// Update window title and taskbar with progress
 		wailsRuntime.WindowSetTitle(a.ctx, fmt.Sprintf("OCR Tool — %d%% (%d/%d)", int(pct*100), current, total))
-		setTaskbarProgress(pct * 100)
+		taskbar.SetProgress(pct * 100)
 	}
 
 	// Create output directory
@@ -156,7 +157,6 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 		if processedSet[base] {
 			continue
 		}
-		// Also skip if output PDF already exists
 		if _, err := os.Stat(outputPath); err == nil {
 			processedSet[base] = true
 			continue
@@ -251,7 +251,6 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 		case <-ctx.Done():
 			emitLog("", "OCR stopped by user", 0, totalFiles, false)
 			wg.Wait()
-			// Save final session state
 			sessionMu.Lock()
 			a.saveSession(session)
 			sessionMu.Unlock()
@@ -266,7 +265,6 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 
 			baseName := filepath.Base(fp)
 
-			// Check context before starting
 			select {
 			case <-ctx.Done():
 				return
@@ -290,31 +288,26 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 
 	wg.Wait()
 
-	// Final session save
 	sessionMu.Lock()
 	a.saveSession(session)
 	sessionMu.Unlock()
 
 	emitLog("", fmt.Sprintf("OCR complete! Processed %d files", atomic.LoadInt64(&processed)), totalFiles, totalFiles, false)
 
-	// Merge PDFs
 	if settings.MergePDF {
 		a.mergePDFs(settings.OutputDir, settings.MergeFilename)
 	}
 
-	// Clear session on success
 	a.ClearSession()
 }
 
-// cjkFontPath returns the path to a CJK-capable font in the fonts/ directory.
-// It searches for common CJK font filenames and returns the first match.
 func (a *App) cjkFontPath() string {
 	fontsDir := filepath.Join(a.exeDir(), "fonts")
 	candidates := []string{
-		"msyh.ttf",                // Microsoft YaHei
-		"NotoSansSC-Regular.ttf",  // Google Noto Sans SC
-		"NotoSansTC-Regular.ttf",  // Google Noto Sans TC
-		"NotoSansJP-Regular.ttf",  // Google Noto Sans JP
+		"msyh.ttf",
+		"NotoSansSC-Regular.ttf",
+		"NotoSansTC-Regular.ttf",
+		"NotoSansJP-Regular.ttf",
 		"NotoSansCJKsc-Regular.ttf",
 		"SourceHanSansSC-Regular.ttf",
 	}
@@ -324,7 +317,6 @@ func (a *App) cjkFontPath() string {
 			return path
 		}
 	}
-	// Fallback: try any .ttf in fonts/ directory
 	matches, _ := filepath.Glob(filepath.Join(fontsDir, "*.ttf"))
 	if len(matches) > 0 {
 		return matches[0]
@@ -337,13 +329,11 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 	pdfName := strings.TrimSuffix(baseName, filepath.Ext(baseName)) + ".pdf"
 	outputPath := filepath.Join(settings.OutputDir, pdfName)
 
-	// Read image file
 	imgData, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("read: %w", err)
 	}
 
-	// Build API request
 	image := &visionpb.Image{Content: imgData}
 	req := &visionpb.AnnotateImageRequest{
 		Image: image,
@@ -355,12 +345,10 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 		},
 	}
 
-	// Call Vision API
 	batchResp, err := client.BatchAnnotateImages(ctx, &visionpb.BatchAnnotateImagesRequest{
 		Requests: []*visionpb.AnnotateImageRequest{req},
 	})
 
-	// Release image data immediately
 	imgData = nil
 	_ = imgData
 
@@ -372,7 +360,7 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 	if resp.Error != nil {
 		return fmt.Errorf("API error: %s", resp.Error.Message)
 	}
-	// Single-page mode: no splitting, all text goes to one page
+
 	if settings.ScanMode == "single" {
 		if resp.FullTextAnnotation == nil {
 			label := pageLabelFromFilenameSingle(baseName)
@@ -392,14 +380,11 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 		return generateSinglePagePDF(outputPath, text, label, fontPath)
 	}
 
-	// Dual-page mode: split by midpoint
 	if resp.FullTextAnnotation == nil {
-		// No text detected - create empty PDF
 		leftLabel, rightLabel := pageLabelsFromFilename(baseName)
 		return generatePDFWithAnnotation(outputPath, "", "", leftLabel, rightLabel, fontPath)
 	}
 
-	// Find image width for left/right splitting
 	maxX := float32(0)
 	for _, page := range resp.FullTextAnnotation.Pages {
 		if page.Width > 0 {
@@ -420,7 +405,6 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 	}
 	midX := maxX / 2
 
-	// Split text into left and right pages
 	var leftTexts, rightTexts []string
 	for _, page := range resp.FullTextAnnotation.Pages {
 		for _, block := range page.Blocks {
@@ -444,8 +428,6 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 	return generatePDFWithAnnotation(outputPath, leftText, rightText, leftLabel, rightLabel, fontPath)
 }
 
-// setupPDFFont configures the PDF with a UTF-8 CJK font if available, otherwise falls back to Helvetica+cp1252.
-// Returns the font family name and a text translator function.
 func setupPDFFont(pdf *fpdf.Fpdf, fontPath string) (string, func(string) string) {
 	if fontPath != "" {
 		pdf.AddUTF8Font("CJK", "", fontPath)
@@ -456,7 +438,6 @@ func setupPDFFont(pdf *fpdf.Fpdf, fontPath string) (string, func(string) string)
 	return "Helvetica", tr
 }
 
-// blockCenterX calculates the center X coordinate of a text block
 func blockCenterX(block *visionpb.Block) float32 {
 	if block.BoundingBox == nil || len(block.BoundingBox.Vertices) == 0 {
 		return 0
@@ -468,7 +449,6 @@ func blockCenterX(block *visionpb.Block) float32 {
 	return sumX / float32(len(block.BoundingBox.Vertices))
 }
 
-// extractBlockText extracts text from a Vision API block with break handling
 func extractBlockText(block *visionpb.Block) string {
 	var parts []string
 	for _, para := range block.Paragraphs {
@@ -497,15 +477,11 @@ func extractBlockText(block *visionpb.Block) string {
 	return strings.TrimSpace(strings.Join(parts, "\n"))
 }
 
-// pageLabelsFromFilename extracts page number labels from the filename
 func pageLabelsFromFilename(basename string) (left, right string) {
-	// Try Roman pattern: Page-r-iv-v.JPG or Page-r-iv-v-a.JPG
 	if m := filePatternRoman.FindStringSubmatch(basename); m != nil {
 		return "Page " + m[1], "Page " + m[2]
 	}
-	// Try Arabic pattern: Page-004-005.JPG or Page-004-005-a.JPG
 	if m := filePatternArabic.FindStringSubmatch(basename); m != nil {
-		// Remove leading zeros for display
 		left := strings.TrimLeft(m[1], "0")
 		right := strings.TrimLeft(m[2], "0")
 		if left == "" {
@@ -519,17 +495,13 @@ func pageLabelsFromFilename(basename string) (left, right string) {
 	return "", ""
 }
 
-// generatePDFWithAnnotation creates a 2-page PDF with page number headers
 func generatePDFWithAnnotation(outputPath, leftText, rightText, leftLabel, rightLabel, fontPath string) error {
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.SetAutoPageBreak(false, 0)
-
 	fontName, tr := setupPDFFont(pdf, fontPath)
-
 	margin := 15.0
 	cellW := 210.0 - margin*2
 
-	// Left page
 	pdf.AddPage()
 	if leftLabel != "" {
 		pdf.SetFont(fontName, "B", 10)
@@ -540,7 +512,6 @@ func generatePDFWithAnnotation(outputPath, leftText, rightText, leftLabel, right
 	pdf.SetXY(margin, margin)
 	pdf.MultiCell(cellW, 5, tr(leftText), "", "L", false)
 
-	// Right page
 	pdf.AddPage()
 	if rightLabel != "" {
 		pdf.SetFont(fontName, "B", 10)
@@ -554,7 +525,6 @@ func generatePDFWithAnnotation(outputPath, leftText, rightText, leftLabel, right
 	return pdf.OutputFileAndClose(outputPath)
 }
 
-// pageLabelFromFilenameSingle extracts a page label from a single-page filename
 func pageLabelFromFilenameSingle(basename string) string {
 	if m := filePatternSingleRoman.FindStringSubmatch(basename); m != nil {
 		return "Page " + m[1]
@@ -569,13 +539,10 @@ func pageLabelFromFilenameSingle(basename string) string {
 	return ""
 }
 
-// generateSinglePagePDF creates a 1-page PDF with a page number header
 func generateSinglePagePDF(outputPath, text, label, fontPath string) error {
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.SetAutoPageBreak(false, 0)
-
 	fontName, tr := setupPDFFont(pdf, fontPath)
-
 	margin := 15.0
 	cellW := 210.0 - margin*2
 
@@ -613,8 +580,6 @@ func (a *App) mergePDFs(outputDir, mergeFilename string) {
 	}
 
 	mergedPath := filepath.Join(outputDir, mergeFilename)
-
-	// Remove existing merged file if present
 	os.Remove(mergedPath)
 
 	if err := pdfcpuapi.MergeCreateFile(pdfFiles, mergedPath, false, nil); err != nil {

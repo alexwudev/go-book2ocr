@@ -18,7 +18,7 @@ async function toggleTheme() {
 
     // Save to config
     try {
-        const { GetConfig, SaveConfig } = await import('../wailsjs/go/main/App.js');
+        const { GetConfig, SaveConfig } = await import('../wailsjs/go/app/App.js');
         const config = await GetConfig();
         config.theme = next;
         await SaveConfig(config);

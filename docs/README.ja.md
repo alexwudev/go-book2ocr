@@ -114,11 +114,11 @@
 <h3 id="方法-aビルド済みリリースをダウンロード推奨">方法 A：ビルド済みリリースをダウンロード（推奨） <a href="#目次">⬆</a></h3>
 
 1. [Releases](https://github.com/alexwudev/go-book2ocr/releases) ページにアクセス
-2. 最新の `go-book2ocr.zip` をダウンロード
+2. 最新の `book2ocr.zip` をダウンロード
 3. 任意のフォルダに展開
 4. Google Cloud API キーを `key/` フォルダに配置（下記の[セットアップ](#1-google-cloud-vision-api-キー)を参照）
 5. （任意）CJK フォントの `.ttf` ファイルを `fonts/` フォルダに配置して中国語・日本語・韓国語に対応（下記の[セットアップ](#2-cjk-フォント中国語日本語韓国語-ocr-用)を参照）
-6. `go-book2ocr.exe` を実行
+6. `book2ocr.exe` を実行
 
 <h3 id="方法-bソースからビルド">方法 B：ソースからビルド <a href="#目次">⬆</a></h3>
 
@@ -127,9 +127,9 @@
 ```bash
 git clone https://github.com/alexwudev/go-book2ocr.git
 cd go-book2ocr
-build.bat          # Windows 環境
+scripts\build.bat          # Windows 環境
 # または
-./build.sh         # WSL 環境（対話式メニュー：Windows または Linux）
+./scripts/build.sh         # WSL 環境（対話式メニュー：Windows または Linux）
 ```
 
 その後、方法 A の手順 4〜6 に従ってください。
@@ -250,7 +250,7 @@ PDF の内蔵フォント（Helvetica）は CJK 文字に対応していませ�
 アプリは初回起動時に `config.json` を自動生成します。サンプルから手動で作成することもできます：
 
 ```
-cp config.example.json config.json
+cp docs/config.example.json config.json
 ```
 
 | フィールド | 説明 |
@@ -291,22 +291,22 @@ sudo apt install gcc pkg-config libgtk-3-dev libwebkit2gtk-4.0-dev
 <h3 id="wslwindows-向けクロスコンパイル">WSL（Windows 向けクロスコンパイル） <a href="#目次">⬆</a></h3>
 
 ```bash
-./build.sh            # または：./build.sh windows
-# 出力：platform/windows/go-book2ocr.exe
+./scripts/build.sh            # または：./scripts/build.sh windows
+# 出力：book2ocr.exe (project root)
 ```
 
 <h3 id="linuxネイティブ">Linux（ネイティブ） <a href="#目次">⬆</a></h3>
 
 ```bash
-./build.sh linux
-# 出力：platform/linux/go-book2ocr
+./scripts/build.sh linux
+# 出力：book2ocr (project root)
 ```
 
 <h3 id="windowsネイティブ">Windows（ネイティブ） <a href="#目次">⬆</a></h3>
 
 ```batch
-build.bat
-REM 出力：platform\windows\go-book2ocr.exe
+scripts\build.bat
+REM 出力：book2ocr.exe (project root)
 ```
 
 <h3 id="開発モード">開発モード <a href="#目次">⬆</a></h3>
@@ -334,30 +334,31 @@ OCR タブでは、入力画像が特定の命名パターンに従っている�
 ```
 go-book2ocr/
 ├── main.go              # アプリエントリーポイント（フレームレスウィンドウ）
-├── app.go               # コアアプリ構造体、設定、セッション、サムネイル
-├── ocr.go               # OCR パイプライン、Vision API、PDF 生成
-├── rename.go            # 一括リネームロジック、ページ番号付与
-├── convert.go           # 画像リサイズ／変換
-├── models.go            # 共有データ型
-├── taskbar_windows.go   # Windows タスクバー進捗（ITaskbarList3）とアイコン
-├── taskbar_stub.go      # 非 Windows ビルド用スタブ
-├── CHANGELOG.md         # バージョン履歴
+├── go.mod / go.sum      # Go 依存関係
 ├── wails.json           # Wails プロジェクト設定
-├── build.sh             # クイックスタートビルドスクリプト（対話式メニューまたは引数）
-├── build.bat            # Windows ネイティブビルドスクリプト
-├── config.example.json  # 設定ファイルのサンプル
+├── LICENSE
+├── README.md
+├── internal/
+│   ├── app/
+│   │   ├── app.go       # コアアプリ構造体、設定、セッション、サムネイル
+│   │   ├── models.go    # 共有データ型
+│   │   ├── ocr.go       # OCR パイプライン、Vision API、PDF 生成
+│   │   ├── rename.go    # 一括リネームロジック、ページ番号付与
+│   │   └── convert.go   # 画像リサイズ／変換
+│   └── taskbar/
+│       ├── taskbar_windows.go  # Windows タスクバー進捗（ITaskbarList3）とアイコン
+│       └── taskbar_stub.go     # 非 Windows ビルド用スタブ
+├── scripts/
+│   ├── build.sh         # クイックスタートビルドスクリプト（対話式メニューまたは引数）
+│   └── build.bat        # Windows ネイティブビルドスクリプト
 ├── platform/
-│   ├── windows/
-│   │   ├── winres.json          # go-winres 設定（アイコンとマニフェスト）
-│   │   └── go-book2ocr.exe     # ビルド出力
-│   └── linux/
-│       └── go-book2ocr         # ビルド出力
+│   └── windows/
+│       └── winres.json  # go-winres 設定（アイコンとマニフェスト）
 ├── build/
 │   ├── appicon.png      # アプリアイコン
 │   └── windows/         # Windows マニフェストとアイコンリソース
-├── docs/                # 翻訳版 README
+├── docs/                # 翻訳版 README、CHANGELOG、config.example.json
 ├── fonts/               # CJK フォントファイル配置用
-├── key/                 # API キーファイル配置用（git 管理対象外）
 ├── frontend/
 │   ├── index.html       # メイン HTML（カスタムタイトルバー）
 │   ├── build.js         # フロントエンドビルドスクリプト

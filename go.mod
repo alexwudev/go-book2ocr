@@ -1,4 +1,4 @@
-module go-book2ocr
+module book2ocr
 
 go 1.24.5
 

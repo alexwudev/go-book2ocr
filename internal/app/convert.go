@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	_ "image/gif"
+
+	"book2ocr/internal/taskbar"
 
 	"github.com/nfnt/resize"
 	"github.com/rwcarlsen/goexif/exif"
@@ -66,7 +68,6 @@ func (a *App) GetImageMetadataList(dir string) ([]ImageMetadata, error) {
 	return results, nil
 }
 
-// getImageDimensions reads image header only (no full decode)
 func getImageDimensions(path string) (int, int) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -100,7 +101,7 @@ func (a *App) StartConvert(dir string, percent int) string {
 			a.convertRunning = false
 			a.cancelConvert = nil
 			a.mu.Unlock()
-			setTaskbarProgress(0)
+			taskbar.SetProgress(0)
 			wailsRuntime.EventsEmit(a.ctx, "convert:finished", nil)
 		}()
 		a.runConvert(ctx, dir, percent)
@@ -133,7 +134,7 @@ func (a *App) runConvert(ctx context.Context, dir string, percent int) {
 			Total:   total,
 			Percent: pct,
 		})
-		setTaskbarProgress(pct * 100)
+		taskbar.SetProgress(pct * 100)
 	}
 
 	if percent < 1 || percent > 99 {
@@ -194,7 +195,6 @@ func resizeOneImage(filePath string, percent int) error {
 		return fmt.Errorf("open: %w", err)
 	}
 
-	// Read EXIF orientation
 	orientation := 1
 	if ex, err := exif.Decode(f); err == nil {
 		if tag, err := ex.Get(exif.Orientation); err == nil {
@@ -211,7 +211,6 @@ func resizeOneImage(filePath string, percent int) error {
 		return fmt.Errorf("decode: %w", err)
 	}
 
-	// Apply EXIF orientation
 	img = applyOrientation(img, orientation)
 
 	bounds := img.Bounds()
@@ -225,9 +224,8 @@ func resizeOneImage(filePath string, percent int) error {
 	}
 
 	resized := resize.Resize(newW, newH, img, resize.Lanczos3)
-	img = nil // release original immediately
+	img = nil
 
-	// Write to temp file, then rename to overwrite
 	tmpPath := filePath + ".tmp"
 	out, err := os.Create(tmpPath)
 	if err != nil {
@@ -240,7 +238,7 @@ func resizeOneImage(filePath string, percent int) error {
 	default:
 		err = jpeg.Encode(out, resized, &jpeg.Options{Quality: 92})
 	}
-	resized = nil // release resized image
+	resized = nil
 
 	if closeErr := out.Close(); closeErr != nil && err == nil {
 		err = closeErr

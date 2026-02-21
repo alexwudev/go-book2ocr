@@ -107,11 +107,11 @@
 <h3 id="方式-a下載預編譯版本推薦">方式 A：下載預編譯版本（推薦） <a href="#目錄">⬆</a></h3>
 
 1. 前往 [Releases](https://github.com/alexwudev/go-book2ocr/releases) 頁面
-2. 下載最新的 `go-book2ocr.zip`
+2. 下載最新的 `book2ocr.zip`
 3. 解壓縮到任意資料夾
 4. 將 Google Cloud API 金鑰放入 `key/` 資料夾（詳見下方[設定](#1-google-cloud-vision-api-金鑰)）
 5. （選用）將 CJK 字體 `.ttf` 檔案放入 `fonts/` 資料夾，以支援中日韓文字（詳見下方[設定](#2-cjk-字體中日韓-ocr-用)）
-6. 執行 `go-book2ocr.exe`
+6. 執行 `book2ocr.exe`
 
 <h3 id="方式-b從原始碼編譯">方式 B：從原始碼編譯 <a href="#目錄">⬆</a></h3>
 
@@ -120,9 +120,9 @@
 ```bash
 git clone https://github.com/alexwudev/go-book2ocr.git
 cd go-book2ocr
-build.bat          # Windows 環境
+scripts\build.bat          # Windows 環境
 # 或
-./build.sh         # WSL 環境（互動式選單：Windows 或 Linux）
+./scripts/build.sh         # WSL 環境（互動式選單：Windows 或 Linux）
 ```
 
 之後按照方式 A 的步驟 4-6 操作即可。
@@ -243,7 +243,7 @@ PDF 內建字體（Helvetica）不支援 CJK 字元。若要正確輸出中日�
 應用程式首次執行時會自動產生 `config.json`。你也可以手動從範例建立：
 
 ```
-cp config.example.json config.json
+cp docs/config.example.json config.json
 ```
 
 | 欄位 | 說明 |
@@ -284,22 +284,22 @@ sudo apt install gcc pkg-config libgtk-3-dev libwebkit2gtk-4.0-dev
 <h3 id="wsl交叉編譯為-windows">WSL（交叉編譯為 Windows） <a href="#目錄">⬆</a></h3>
 
 ```bash
-./build.sh            # 或：./build.sh windows
-# 輸出：platform/windows/go-book2ocr.exe
+./scripts/build.sh            # 或：./scripts/build.sh windows
+# 輸出：book2ocr.exe (project root)
 ```
 
 <h3 id="linux原生編譯">Linux（原生編譯） <a href="#目錄">⬆</a></h3>
 
 ```bash
-./build.sh linux
-# 輸出：platform/linux/go-book2ocr
+./scripts/build.sh linux
+# 輸出：book2ocr (project root)
 ```
 
 <h3 id="windows原生編譯">Windows（原生編譯） <a href="#目錄">⬆</a></h3>
 
 ```batch
-build.bat
-REM 輸出：platform\windows\go-book2ocr.exe
+scripts\build.bat
+REM 輸出：book2ocr.exe (project root)
 ```
 
 <h3 id="開發模式">開發模式 <a href="#目錄">⬆</a></h3>
@@ -326,44 +326,45 @@ OCR 分頁需要輸入圖片遵循特定命名格式（由重新命名分頁產�
 
 ```
 go-book2ocr/
-├── main.go              # 應用程式進入點（無框視窗）
-├── app.go               # 核心結構、設定、工作階段、縮圖
-├── ocr.go               # OCR 流程、Vision API、PDF 生成
-├── rename.go            # 批次重新命名邏輯、頁碼分配
-├── convert.go           # 圖片縮放轉檔
-├── models.go            # 共用資料類型
-├── taskbar_windows.go   # Windows 工作列進度（ITaskbarList3）與圖示
-├── taskbar_stub.go      # 非 Windows 建置的空實作
-├── CHANGELOG.md         # 版本歷程
-├── wails.json           # Wails 專案設定
-├── build.sh             # 快速建置腳本（互動式選單或參數）
-├── build.bat            # Windows 原生編譯腳本
-├── config.example.json  # 設定檔範例
+├── main.go              # App entry point (frameless window)
+├── go.mod / go.sum      # Go dependencies
+├── wails.json           # Wails project config
+├── LICENSE
+├── README.md
+├── internal/
+│   ├── app/
+│   │   ├── app.go       # Core app struct, config, session, thumbnails
+│   │   ├── models.go    # Shared data types
+│   │   ├── ocr.go       # OCR pipeline, Vision API, PDF generation
+│   │   ├── rename.go    # Batch rename logic, page numbering
+│   │   └── convert.go   # Image resize/conversion
+│   └── taskbar/
+│       ├── taskbar_windows.go  # Windows taskbar progress (ITaskbarList3) & icon
+│       └── taskbar_stub.go     # No-op stub for non-Windows builds
+├── scripts/
+│   ├── build.sh         # Quickstart build script (interactive menu or argument)
+│   └── build.bat        # Windows native build script
 ├── platform/
-│   ├── windows/
-│   │   ├── winres.json          # go-winres 設定（圖示與 manifest）
-│   │   └── go-book2ocr.exe     # 編譯產出
-│   └── linux/
-│       └── go-book2ocr         # 編譯產出
+│   └── windows/
+│       └── winres.json  # go-winres config (icon & manifest)
 ├── build/
-│   ├── appicon.png      # 應用程式圖示
-│   └── windows/         # Windows manifest 與圖示資源
-├── docs/                # 翻譯版 README
-├── fonts/               # 放置 CJK 字體檔案
-├── key/                 # 放置 API 金鑰檔案（已被 git 忽略）
+│   ├── appicon.png      # App icon
+│   └── windows/         # Windows manifest & icon resources
+├── docs/                # Translated READMEs, CHANGELOG, config.example.json
+├── fonts/               # Place CJK font files here
 ├── frontend/
-│   ├── index.html       # 主要 HTML（自訂標題列）
-│   ├── build.js         # 前端建置腳本
+│   ├── index.html       # Main HTML (custom title bar)
+│   ├── build.js         # Frontend build script
 │   └── src/
-│       ├── main.js      # 分頁切換、設定管理、i18n、視窗控制
-│       ├── i18n.js      # 國際化（14 種語言）
-│       ├── ocr.js       # OCR 分頁 UI
-│       ├── rename.js    # 重新命名分頁 UI
-│       ├── convert.js   # 轉檔分頁 UI
-│       ├── timer.js     # 計時器類別
-│       ├── theme.js     # 主題切換
-│       └── style.css    # 所有樣式（含 RTL 支援）
-└── output/              # 預設 OCR 輸出目錄（已被 git 忽略）
+│       ├── main.js      # Tab switching, config, i18n, window controls
+│       ├── i18n.js      # Internationalization (14 languages)
+│       ├── ocr.js       # OCR tab UI
+│       ├── rename.js    # Rename tab UI
+│       ├── convert.js   # Convert tab UI
+│       ├── timer.js     # Elapsed timer class
+│       ├── theme.js     # Theme toggling
+│       └── style.css    # All styles (incl. RTL support)
+└── output/              # Default OCR output directory (git-ignored)
 ```
 
 <h2 id="授權條款">授權條款 <a href="#目錄">⬆</a></h2>

@@ -1,7 +1,7 @@
 #!/bin/bash
 # OCR Tool — Quickstart Build Script
-# Usage: ./build.sh [windows|linux]
-cd "$(dirname "$0")"
+# Usage: ./scripts/build.sh [windows|linux]
+cd "$(dirname "$0")/.."
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -61,14 +61,13 @@ if [ "$TARGET" = "windows" ]; then
     echo ""
     echo "=== Building Windows executable ==="
     CGO_ENABLED=0 GOOS=windows GOARCH=amd64 \
-        go build -tags desktop,production -ldflags "-s -w -H windowsgui" -o go-book2ocr.exe .
+        go build -tags desktop,production -ldflags "-s -w -H windowsgui" -o book2ocr.exe .
 
     if [ $? -eq 0 ]; then
-        mv go-book2ocr.exe platform/windows/
-        rm -f rsrc_windows_amd64.syso
+        rm -f rsrc_windows_*.syso
         echo ""
         echo "Build complete!"
-        ls -lh platform/windows/go-book2ocr.exe
+        ls -lh book2ocr.exe
     else
         echo "Build FAILED!"
         exit 1
@@ -78,13 +77,12 @@ elif [ "$TARGET" = "linux" ]; then
     echo ""
     echo "=== Building Linux executable ==="
     CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
-        go build -tags desktop,production -ldflags "-s -w" -o go-book2ocr .
+        go build -tags desktop,production -ldflags "-s -w" -o book2ocr .
 
     if [ $? -eq 0 ]; then
-        mv go-book2ocr platform/linux/
         echo ""
         echo "Build complete!"
-        ls -lh platform/linux/go-book2ocr
+        ls -lh book2ocr
     else
         echo "Build FAILED!"
         exit 1

@@ -8,7 +8,7 @@ let App = null;
 
 async function getApp() {
     if (!App) {
-        App = await import('../wailsjs/go/main/App.js');
+        App = await import('../wailsjs/go/app/App.js');
     }
     return App;
 }
@@ -63,10 +63,32 @@ export function initRenameTab() {
     });
     document.getElementById('execute-rename-btn').addEventListener('click', executeRename);
 
+    // Batch select-all checkbox
+    document.getElementById('batch-select-all').addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        document.querySelectorAll('.thumb-checkbox').forEach(cb => {
+            cb.checked = checked;
+            cb.closest('.image-item').classList.toggle('selected', checked);
+        });
+        updateBatchCount();
+    });
+
+    // Batch apply button
+    document.getElementById('batch-apply-btn').addEventListener('click', () => {
+        const type = document.getElementById('batch-type-select').value;
+        document.querySelectorAll('.thumb-checkbox:checked').forEach(cb => {
+            const idx = parseInt(cb.dataset.idx);
+            currentImages[idx].pageType = type;
+            cb.closest('.image-item').querySelector('.page-type-select').value = type;
+        });
+        clearAllPreviews();
+    });
+
     // Scan mode toggle: update page type options when mode changes + sync OCR tab
     document.querySelectorAll('input[name="scan-mode-rename"]').forEach(radio => {
         radio.addEventListener('change', () => {
             updatePageTypeOptions();
+            updateBatchTypeOptions();
             clearAllPreviews();
             // Sync OCR tab radio
             const ocrRadio = document.querySelector(`input[name="scan-mode-ocr"][value="${getScanModeRename()}"]`);
@@ -79,21 +101,17 @@ export function initRenameTab() {
 
 function updatePageTypeOptions() {
     const mode = getScanModeRename();
-    document.querySelectorAll('.page-type-select').forEach(select => {
+    document.querySelectorAll('#image-list .page-type-select').forEach(select => {
         const idx = parseInt(select.dataset.idx);
         if (mode === 'single') {
-            // In single-page mode, only Normal and TypeB are valid
-            // Reset TypeA/TypeC to Normal
             if (select.value === 'TypeA' || select.value === 'TypeC') {
                 select.value = 'Normal';
                 currentImages[idx].pageType = 'Normal';
             }
-            // Hide TypeA/TypeC options
             Array.from(select.options).forEach(opt => {
                 opt.hidden = (opt.value === 'TypeA' || opt.value === 'TypeC');
             });
         } else {
-            // Show all options
             Array.from(select.options).forEach(opt => {
                 opt.hidden = false;
             });
@@ -105,6 +123,35 @@ function updatePageTypeOptions() {
     document.querySelectorAll('.page-override-input').forEach(input => {
         input.placeholder = placeholder;
     });
+}
+
+function updateBatchTypeOptions() {
+    const mode = getScanModeRename();
+    const isSingle = mode === 'single';
+    const typeBLabel = isSingle ? t('pageType.typeB.single') : t('pageType.typeB.dual');
+    const select = document.getElementById('batch-type-select');
+    const currentVal = select.value;
+    select.innerHTML = `
+        <option value="Normal">${t('pageType.normal')}</option>
+        <option value="TypeA" ${isSingle ? 'hidden' : ''}>${t('pageType.typeA')}</option>
+        <option value="TypeB">${typeBLabel}</option>
+        <option value="TypeC" ${isSingle ? 'hidden' : ''}>${t('pageType.typeC')}</option>
+        <option value="Skip">${t('pageType.skip')}</option>
+    `;
+    // Restore previous selection if still valid
+    if (!isSingle || (currentVal !== 'TypeA' && currentVal !== 'TypeC')) {
+        select.value = currentVal;
+    }
+}
+
+function updateBatchCount() {
+    const total = document.querySelectorAll('.thumb-checkbox').length;
+    const checked = document.querySelectorAll('.thumb-checkbox:checked').length;
+    const countEl = document.getElementById('batch-count');
+    countEl.textContent = checked > 0 ? `(${checked}/${total})` : '';
+    const selectAll = document.getElementById('batch-select-all');
+    selectAll.checked = checked === total && total > 0;
+    selectAll.indeterminate = checked > 0 && checked < total;
 }
 
 async function selectFolder() {
@@ -196,6 +243,7 @@ function renderImageList(images) {
         item.innerHTML = `
             <div class="thumb-container" data-path="${img.originalPath}" data-idx="${idx}">
                 <span class="thumb-badge">${idx + 1}</span>
+                <input type="checkbox" class="thumb-checkbox" data-idx="${idx}">
                 <div class="thumb-placeholder">${idx + 1}</div>
             </div>
             <div class="image-info">
@@ -215,7 +263,14 @@ function renderImageList(images) {
         `;
         list.appendChild(item);
 
-        // Thumbnail loading is deferred to batched loader below
+        // Checkbox for batch selection
+        item.querySelector('.thumb-checkbox').addEventListener('change', (e) => {
+            e.stopPropagation();
+            item.classList.toggle('selected', e.target.checked);
+            updateBatchCount();
+        });
+        // Prevent checkbox click from triggering preview
+        item.querySelector('.thumb-checkbox').addEventListener('click', (e) => e.stopPropagation());
 
         const thumbContainer = item.querySelector('.thumb-container');
         thumbContainer.addEventListener('click', togglePreview);
@@ -231,6 +286,13 @@ function renderImageList(images) {
             clearAllPreviews();
         });
     });
+
+    // Show/hide batch action bar and populate its options
+    const batchBar = document.getElementById('batch-action-bar');
+    batchBar.classList.toggle('visible', images.length > 0);
+    if (images.length > 0) updateBatchTypeOptions();
+    document.getElementById('batch-select-all').checked = false;
+    document.getElementById('batch-count').textContent = '';
 
     // Load thumbnails in batches to avoid memory spikes
     const thumbItems = [];
@@ -259,10 +321,12 @@ async function loadThumbnailLazy(container, path) {
     try {
         const app = await getApp();
         const dataUrl = await app.GetImageThumbnail(path, 180);
-        // Preserve the badge
+        // Preserve the badge and checkbox
         const badge = container.querySelector('.thumb-badge');
+        const checkbox = container.querySelector('.thumb-checkbox');
         container.innerHTML = '';
         container.appendChild(badge);
+        if (checkbox) container.appendChild(checkbox);
         const imgEl = document.createElement('img');
         imgEl.src = dataUrl;
         imgEl.alt = 'thumb';

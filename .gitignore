@@ -7,8 +7,8 @@
 *.syso
 
 # Platform build outputs
-platform/windows/go-book2ocr.exe
-platform/linux/go-book2ocr
+platform/windows/*.exe
+platform/linux/book2ocr
 
 # Credentials & secrets
 key/

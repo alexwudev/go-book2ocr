@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0"
+cd /d "%~dp0\.."
 
 echo === Building frontend ===
 cd frontend
@@ -14,12 +14,12 @@ if %errorlevel% equ 0 (
     echo go-winres not found, skipping icon embed
 )
 
-echo === Building go-book2ocr.exe ===
-go build -tags desktop,production -ldflags "-s -w -H windowsgui" -o platform\windows\go-book2ocr.exe .
+echo === Building book2ocr.exe ===
+go build -tags desktop,production -ldflags "-s -w -H windowsgui" -o book2ocr.exe .
 
 if %errorlevel% equ 0 (
-    del /q rsrc_windows_amd64.syso >nul 2>nul
-    echo Build OK! -^> platform\windows\go-book2ocr.exe
+    del /q rsrc_windows_*.syso >nul 2>nul
+    echo Build OK! -^> book2ocr.exe
 ) else (
     echo Build FAILED!
 )

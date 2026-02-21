@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -13,11 +13,6 @@ func (a *App) LoadImagesFromFolder(dir string) ([]ImageInfo, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir: %w", err)
-	}
-
-	imageExts := map[string]bool{
-		".jpg": true, ".jpeg": true, ".png": true,
-		".tif": true, ".tiff": true, ".bmp": true,
 	}
 
 	var images []ImageInfo
@@ -57,24 +52,21 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 
 	currentPage := romanStart
 	isRoman := true
-	typeBCount := 0 // counter for consecutive TypeB suffix
+	typeBCount := 0
 	lastValidPage := 0
 
 	if arabicStartIdx <= 0 {
-		// All arabic, no roman section
 		isRoman = false
 		currentPage = arabicStart
 	}
 
 	for i, img := range images {
-		// Check if we switch to Arabic at this index
 		if arabicStartIdx > 0 && i == arabicStartIdx {
 			isRoman = false
 			currentPage = arabicStart
 			typeBCount = 0
 		}
 
-		// Apply left page override if set
 		if img.LeftPageOverride > 0 {
 			currentPage = img.LeftPageOverride
 			typeBCount = 0
@@ -93,7 +85,6 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 
 		switch img.PageType {
 		case "Skip":
-			// Don't rename, don't consume page numbers
 			preview.LeftPage = "[skip]"
 			preview.RightPage = ""
 			preview.NewName = img.OriginalName
@@ -116,7 +107,6 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 			currentPage += 2
 
 		case "TypeA":
-			// Left page has page number, right page is image (no page number)
 			typeBCount = 0
 			leftPage := currentPage
 			lastValidPage = leftPage
@@ -130,10 +120,9 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 				preview.RightPage = "[img]"
 				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", leftPage, leftPage+1, ext)
 			}
-			currentPage += 1 // only left page counted
+			currentPage += 1
 
 		case "TypeB":
-			// Both pages are images, no page numbers
 			suffix := string(rune('a' + typeBCount))
 			typeBCount++
 
@@ -146,10 +135,8 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 				preview.RightPage = "[img]"
 				preview.NewName = fmt.Sprintf("Page-%03d-%03d-%s%s", lastValidPage, lastValidPage+1, suffix, ext)
 			}
-			// currentPage unchanged — no pages counted
 
 		case "TypeC":
-			// Left page is image (no page number), right page has page number
 			typeBCount = 0
 			rightPage := currentPage
 			lastValidPage = rightPage
@@ -163,7 +150,7 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 				preview.RightPage = fmt.Sprintf("%d", rightPage)
 				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", rightPage-1, rightPage, ext)
 			}
-			currentPage += 1 // only right page counted
+			currentPage += 1
 		}
 
 		previews = append(previews, preview)
@@ -211,7 +198,6 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 
 		switch img.PageType {
 		case "Skip":
-			// Don't rename, don't consume page numbers
 			preview.LeftPage = "[skip]"
 			preview.RightPage = ""
 			preview.NewName = img.OriginalName
@@ -233,7 +219,6 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 			currentPage++
 
 		case "TypeB":
-			// Image page without page number
 			suffix := string(rune('a' + typeBCount))
 			typeBCount++
 
@@ -246,10 +231,8 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 				preview.RightPage = ""
 				preview.NewName = fmt.Sprintf("Page-%03d-%s%s", lastValidPage, suffix, ext)
 			}
-			// currentPage unchanged
 
 		default:
-			// TypeA/TypeC not applicable in single-page mode, treat as Normal
 			typeBCount = 0
 			page := currentPage
 			lastValidPage = page
@@ -274,7 +257,6 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 
 // ExecuteRename renames files on disk according to the preview
 func (a *App) ExecuteRename(dir string, previews []RenamePreview) error {
-	// First pass: rename all to temp names to avoid collisions
 	type renameOp struct {
 		from string
 		temp string
@@ -293,14 +275,12 @@ func (a *App) ExecuteRename(dir string, previews []RenamePreview) error {
 		})
 	}
 
-	// Rename to temp names
 	for _, op := range ops {
 		if err := os.Rename(op.from, op.temp); err != nil {
 			return fmt.Errorf("rename %s -> temp: %w", op.from, err)
 		}
 	}
 
-	// Rename from temp to final names
 	for _, op := range ops {
 		if err := os.Rename(op.temp, op.to); err != nil {
 			return fmt.Errorf("rename temp -> %s: %w", op.to, err)
@@ -310,15 +290,12 @@ func (a *App) ExecuteRename(dir string, previews []RenamePreview) error {
 	return nil
 }
 
-// toRoman converts an integer to lowercase Roman numeral string
 func toRoman(n int) string {
 	if n <= 0 {
 		return "0"
 	}
-
 	values := []int{1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1}
 	symbols := []string{"m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"}
-
 	var result strings.Builder
 	for i, val := range values {
 		for n >= val {
@@ -329,13 +306,11 @@ func toRoman(n int) string {
 	return result.String()
 }
 
-// fromRoman converts a lowercase Roman numeral string to int
 func fromRoman(s string) int {
 	romanMap := map[byte]int{
 		'i': 1, 'v': 5, 'x': 10, 'l': 50,
 		'c': 100, 'd': 500, 'm': 1000,
 	}
-
 	s = strings.ToLower(s)
 	result := 0
 	for i := 0; i < len(s); i++ {

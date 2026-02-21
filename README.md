@@ -107,11 +107,11 @@ A desktop application for batch OCR processing, built with [Wails](https://wails
 <h3 id="option-a-download-pre-built-release-recommended">Option A: Download Pre-built Release (Recommended) <a href="#table-of-contents">⬆</a></h3>
 
 1. Go to the [Releases](https://github.com/alexwudev/go-book2ocr/releases) page
-2. Download the latest `go-book2ocr.zip`
+2. Download the latest `book2ocr.zip`
 3. Extract to any folder
 4. Place your Google Cloud API key in the `key/` folder (see [Setup](#1-google-cloud-vision-api-key) below)
 5. (Optional) Place a CJK font `.ttf` file in the `fonts/` folder for Chinese/Japanese/Korean support (see [Setup](#2-cjk-font-for-chinesejapanesekorean-ocr) below)
-6. Run `go-book2ocr.exe`
+6. Run `book2ocr.exe`
 
 <h3 id="option-b-build-from-source">Option B: Build from Source <a href="#table-of-contents">⬆</a></h3>
 
@@ -120,9 +120,9 @@ Requires [Go](https://go.dev/) 1.24+ and [Node.js](https://nodejs.org/).
 ```bash
 git clone https://github.com/alexwudev/go-book2ocr.git
 cd go-book2ocr
-build.bat          # on Windows
+scripts\build.bat          # on Windows
 # or
-./build.sh         # on WSL (interactive menu: Windows or Linux)
+./scripts/build.sh         # on WSL (interactive menu: Windows or Linux)
 ```
 
 Then follow the same steps 4-6 from Option A.
@@ -243,7 +243,7 @@ Recommended fonts (any one will work):
 The app generates `config.json` automatically on first run. You can also create it manually from the example:
 
 ```
-cp config.example.json config.json
+cp docs/config.example.json config.json
 ```
 
 | Field | Description |
@@ -284,22 +284,22 @@ sudo apt install gcc pkg-config libgtk-3-dev libwebkit2gtk-4.0-dev
 <h3 id="wsl-cross-compile-to-windows">WSL (cross-compile to Windows) <a href="#table-of-contents">⬆</a></h3>
 
 ```bash
-./build.sh            # or: ./build.sh windows
-# Output: platform/windows/go-book2ocr.exe
+./scripts/build.sh            # or: ./scripts/build.sh windows
+# Output: book2ocr.exe (project root)
 ```
 
 <h3 id="linux-native">Linux (native) <a href="#table-of-contents">⬆</a></h3>
 
 ```bash
-./build.sh linux
-# Output: platform/linux/go-book2ocr
+./scripts/build.sh linux
+# Output: book2ocr (project root)
 ```
 
 <h3 id="windows-native">Windows (native) <a href="#table-of-contents">⬆</a></h3>
 
 ```batch
-build.bat
-REM Output: platform\windows\go-book2ocr.exe
+scripts\build.bat
+REM Output: book2ocr.exe (project root)
 ```
 
 <h3 id="development-mode">Development Mode <a href="#table-of-contents">⬆</a></h3>
@@ -327,30 +327,31 @@ The OCR tab expects input images to follow a specific naming pattern (produced b
 ```
 go-book2ocr/
 ├── main.go              # App entry point (frameless window)
-├── app.go               # Core app struct, config, session, thumbnails
-├── ocr.go               # OCR pipeline, Vision API, PDF generation
-├── rename.go            # Batch rename logic, page numbering
-├── convert.go           # Image resize/conversion
-├── models.go            # Shared data types
-├── taskbar_windows.go   # Windows taskbar progress (ITaskbarList3) & icon
-├── taskbar_stub.go      # No-op stub for non-Windows builds
-├── CHANGELOG.md         # Version history
+├── go.mod / go.sum      # Go dependencies
 ├── wails.json           # Wails project config
-├── build.sh             # Quickstart build script (interactive menu or argument)
-├── build.bat            # Windows native build script
-├── config.example.json  # Example configuration
+├── LICENSE
+├── README.md
+├── internal/
+│   ├── app/
+│   │   ├── app.go       # Core app struct, config, session, thumbnails
+│   │   ├── models.go    # Shared data types
+│   │   ├── ocr.go       # OCR pipeline, Vision API, PDF generation
+│   │   ├── rename.go    # Batch rename logic, page numbering
+│   │   └── convert.go   # Image resize/conversion
+│   └── taskbar/
+│       ├── taskbar_windows.go  # Windows taskbar progress (ITaskbarList3) & icon
+│       └── taskbar_stub.go     # No-op stub for non-Windows builds
+├── scripts/
+│   ├── build.sh         # Quickstart build script (interactive menu or argument)
+│   └── build.bat        # Windows native build script
 ├── platform/
-│   ├── windows/
-│   │   ├── winres.json          # go-winres config (icon & manifest)
-│   │   └── go-book2ocr.exe     # Build output
-│   └── linux/
-│       └── go-book2ocr         # Build output
+│   └── windows/
+│       └── winres.json  # go-winres config (icon & manifest)
 ├── build/
 │   ├── appicon.png      # App icon
 │   └── windows/         # Windows manifest & icon resources
-├── docs/                # Translated READMEs
+├── docs/                # Translated READMEs, CHANGELOG, config.example.json
 ├── fonts/               # Place CJK font files here
-├── key/                 # Place API key files here (git-ignored)
 ├── frontend/
 │   ├── index.html       # Main HTML (custom title bar)
 │   ├── build.js         # Frontend build script
