@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"log"
+	"os"
 
 	"book2ocr/internal/app"
 
@@ -15,6 +16,10 @@ import (
 var assets embed.FS
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "ocr" {
+		os.Exit(app.RunCLI(os.Args))
+	}
+
 	a := app.NewApp()
 
 	err := wails.Run(&options.App{

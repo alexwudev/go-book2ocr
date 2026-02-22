@@ -24,6 +24,7 @@ A desktop application for batch OCR processing, built with [Wails](https://wails
   - [Rename Tab](#rename-tab)
   - [OCR Tab](#ocr-tab)
   - [Convert Tab](#convert-tab)
+- [CLI Mode](#cli-mode)
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
   - [Google Cloud Vision API Key](#1-google-cloud-vision-api-key)
@@ -102,6 +103,7 @@ A desktop application for batch OCR processing, built with [Wails](https://wails
 - Dark / Light theme
 - RTL layout support for Persian
 - Settings saved to `config.json` automatically
+- **CLI mode**: run OCR from the command line with structured JSON Lines output, for automation and AI agent integration
 
 <h2 id="quick-start">Quick Start <a href="#table-of-contents">⬆</a></h2>
 
@@ -175,6 +177,69 @@ This tool is designed for digitizing scanned books. The typical workflow is:
 1. Select a folder of images
 2. Set the resize percentage (1-99%)
 3. Click **Start** — images are resized in place
+
+<h2 id="cli-mode">CLI Mode <a href="#table-of-contents">⬆</a></h2>
+
+The same `book2ocr.exe` can be invoked from the command line for headless OCR processing. This is useful for automation, scripting, or integration with AI agents. Double-clicking the exe still opens the GUI as usual.
+
+<h3 id="basic-cli-usage">Basic Usage <a href="#table-of-contents">⬆</a></h3>
+
+```bash
+# Use config.json defaults, just specify the image directory:
+book2ocr.exe ocr --dir "C:\images\book1"
+
+# Full specification:
+book2ocr.exe ocr --dir "C:\images" --provider tesseract --tesseract-path "C:\Tesseract\tesseract.exe" --lang en,ja --concurrency 4 --scan-mode dual --merge
+
+# Filter errors with jq:
+book2ocr.exe ocr --dir "C:\images" | jq "select(.isError==true)"
+```
+
+<h3 id="cli-flags">CLI Flags <a href="#table-of-contents">⬆</a></h3>
+
+All flags are optional except `--dir`. Unspecified flags fall back to values from `config.json`.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dir` | **required** | Image directory |
+| `--output` | config / auto | Output directory |
+| `--provider` | config | `google`, `ocrspace`, or `tesseract` |
+| `--cred` | config | Google Vision credential JSON path |
+| `--lang` | config | Comma-separated language codes |
+| `--concurrency` | config | Concurrency (1-10) |
+| `--scan-mode` | config | `dual` or `single` |
+| `--merge` | config | Merge PDFs after OCR |
+| `--merge-name` | config | Merged PDF filename |
+| `--tesseract-path` | config | Path to `tesseract.exe` |
+| `--ocrspace-key` | config | OCR.space API key |
+| `--ocrspace-engine` | config | OCR.space engine (1/2/3) |
+| `--ocrspace-plan` | config | `free` or `pro` |
+
+<h3 id="json-lines-output">JSON Lines Output <a href="#table-of-contents">⬆</a></h3>
+
+CLI mode outputs structured JSON Lines to stdout (one JSON object per line):
+
+```jsonl
+{"type":"start","totalFiles":120,"remaining":115,"provider":"google","scanMode":"dual","outputDir":"C:\\output"}
+{"type":"log","filename":"Page-001-002.JPG","index":1,"total":120,"message":"OK"}
+{"type":"progress","current":1,"total":120,"percent":0.008}
+{"type":"done","processed":115,"errors":2,"elapsed":"3m42s"}
+```
+
+| Event | Key Fields | Description |
+|-------|------------|-------------|
+| `start` | `totalFiles`, `remaining`, `provider`, `scanMode`, `outputDir` | Emitted once at the beginning |
+| `log` | `filename`, `index`, `total`, `message`, `isError` | Per-file result or pipeline message |
+| `progress` | `current`, `total`, `percent` | After each file is processed |
+| `done` | `processed`, `errors`, `elapsed` | Emitted once at the end |
+
+<h3 id="exit-codes">Exit Codes <a href="#table-of-contents">⬆</a></h3>
+
+| Code | Meaning |
+|------|---------|
+| 0 | All files processed successfully |
+| 1 | Fatal error (bad arguments, missing directory, API client failure) |
+| 2 | Partial failure (some files had errors) |
 
 <h2 id="prerequisites">Prerequisites <a href="#table-of-contents">⬆</a></h2>
 

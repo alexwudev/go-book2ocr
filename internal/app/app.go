@@ -35,6 +35,9 @@ type App struct {
 	convertRunning bool
 	mu             sync.Mutex
 	thumbSem       chan struct{} // limits concurrent thumbnail decoding
+	onLog          func(entry LogEntry)
+	onProgress     func(update ProgressUpdate)
+	onFinished     func()
 }
 
 // NewApp creates a new App instance

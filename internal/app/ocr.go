@@ -54,9 +54,13 @@ func (a *App) StartOCR(settings OCRSettings) string {
 			a.ocrRunning = false
 			a.cancelOCR = nil
 			a.mu.Unlock()
-			wailsRuntime.WindowSetTitle(a.ctx, "OCR Tool")
-			taskbar.SetProgress(0)
-			wailsRuntime.EventsEmit(a.ctx, "ocr:finished", nil)
+			if a.onFinished != nil {
+				a.onFinished()
+			} else {
+				wailsRuntime.WindowSetTitle(a.ctx, "OCR Tool")
+				taskbar.SetProgress(0)
+				wailsRuntime.EventsEmit(a.ctx, "ocr:finished", nil)
+			}
 		}()
 		a.runOCRPipeline(ctx, settings)
 	}()
@@ -82,24 +86,34 @@ func (a *App) IsOCRRunning() bool {
 
 func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 	emitLog := func(filename, message string, index, total int, isError bool) {
-		wailsRuntime.EventsEmit(a.ctx, "ocr:log", LogEntry{
+		entry := LogEntry{
 			Filename: filename,
 			Index:    index,
 			Total:    total,
 			Message:  message,
 			IsError:  isError,
-		})
+		}
+		if a.onLog != nil {
+			a.onLog(entry)
+		} else {
+			wailsRuntime.EventsEmit(a.ctx, "ocr:log", entry)
+		}
 	}
 
 	emitProgress := func(current, total int) {
 		pct := float64(current) / float64(total)
-		wailsRuntime.EventsEmit(a.ctx, "ocr:progress", ProgressUpdate{
+		update := ProgressUpdate{
 			Current: current,
 			Total:   total,
 			Percent: pct,
-		})
-		wailsRuntime.WindowSetTitle(a.ctx, fmt.Sprintf("OCR Tool — %d%% (%d/%d)", int(pct*100), current, total))
-		taskbar.SetProgress(pct * 100)
+		}
+		if a.onProgress != nil {
+			a.onProgress(update)
+		} else {
+			wailsRuntime.EventsEmit(a.ctx, "ocr:progress", update)
+			wailsRuntime.WindowSetTitle(a.ctx, fmt.Sprintf("OCR Tool — %d%% (%d/%d)", int(pct*100), current, total))
+			taskbar.SetProgress(pct * 100)
+		}
 	}
 
 	// Create output directory
@@ -592,18 +606,22 @@ func generateSinglePagePDF(outputPath, text, label, fontPath string) error {
 }
 
 func (a *App) mergePDFs(outputDir, mergeFilename string) {
-	wailsRuntime.EventsEmit(a.ctx, "ocr:log", LogEntry{
-		Message: "Merging all PDFs...",
-	})
+	mergeLog := func(msg string, isError bool) {
+		entry := LogEntry{Message: msg, IsError: isError}
+		if a.onLog != nil {
+			a.onLog(entry)
+		} else {
+			wailsRuntime.EventsEmit(a.ctx, "ocr:log", entry)
+		}
+	}
+
+	mergeLog("Merging all PDFs...", false)
 
 	pdfFiles, _ := filepath.Glob(filepath.Join(outputDir, "Page-*.pdf"))
 	sort.Strings(pdfFiles)
 
 	if len(pdfFiles) == 0 {
-		wailsRuntime.EventsEmit(a.ctx, "ocr:log", LogEntry{
-			Message: "No PDF files to merge",
-			IsError: true,
-		})
+		mergeLog("No PDF files to merge", true)
 		return
 	}
 
@@ -615,14 +633,9 @@ func (a *App) mergePDFs(outputDir, mergeFilename string) {
 	os.Remove(mergedPath)
 
 	if err := pdfcpuapi.MergeCreateFile(pdfFiles, mergedPath, false, nil); err != nil {
-		wailsRuntime.EventsEmit(a.ctx, "ocr:log", LogEntry{
-			Message: fmt.Sprintf("Merge failed: %v", err),
-			IsError: true,
-		})
+		mergeLog(fmt.Sprintf("Merge failed: %v", err), true)
 		return
 	}
 
-	wailsRuntime.EventsEmit(a.ctx, "ocr:log", LogEntry{
-		Message: fmt.Sprintf("Merge complete! %d PDFs merged into: %s", len(pdfFiles), mergedPath),
-	})
+	mergeLog(fmt.Sprintf("Merge complete! %d PDFs merged into: %s", len(pdfFiles), mergedPath), false)
 }
