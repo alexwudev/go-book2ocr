@@ -10,6 +10,12 @@ export namespace app {
 	    theme: string;
 	    scanMode: string;
 	    uiLang: string;
+	    provider: string;
+	    ocrSpaceApiKey: string;
+	    ocrSpaceEngine: number;
+	    ocrSpacePlan: string;
+	    tesseractPath: string;
+	    imageDir: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppConfig(source);
@@ -26,6 +32,12 @@ export namespace app {
 	        this.theme = source["theme"];
 	        this.scanMode = source["scanMode"];
 	        this.uiLang = source["uiLang"];
+	        this.provider = source["provider"];
+	        this.ocrSpaceApiKey = source["ocrSpaceApiKey"];
+	        this.ocrSpaceEngine = source["ocrSpaceEngine"];
+	        this.ocrSpacePlan = source["ocrSpacePlan"];
+	        this.tesseractPath = source["tesseractPath"];
+	        this.imageDir = source["imageDir"];
 	    }
 	}
 	export class ImageInfo {
@@ -33,7 +45,6 @@ export namespace app {
 	    originalName: string;
 	    index: number;
 	    pageType: string;
-	    isRoman: boolean;
 	    leftPageOverride: number;
 	
 	    static createFrom(source: any = {}) {
@@ -46,7 +57,6 @@ export namespace app {
 	        this.originalName = source["originalName"];
 	        this.index = source["index"];
 	        this.pageType = source["pageType"];
-	        this.isRoman = source["isRoman"];
 	        this.leftPageOverride = source["leftPageOverride"];
 	    }
 	}
@@ -93,6 +103,12 @@ export namespace app {
 	    mergePdf: boolean;
 	    mergeFilename: string;
 	    scanMode: string;
+	    provider: string;
+	    ocrSpaceApiKey: string;
+	    ocrSpaceEngine: number;
+	    ocrSpacePlan: string;
+	    tesseractPath: string;
+	    selectedFiles: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new OCRSettings(source);
@@ -108,6 +124,12 @@ export namespace app {
 	        this.mergePdf = source["mergePdf"];
 	        this.mergeFilename = source["mergeFilename"];
 	        this.scanMode = source["scanMode"];
+	        this.provider = source["provider"];
+	        this.ocrSpaceApiKey = source["ocrSpaceApiKey"];
+	        this.ocrSpaceEngine = source["ocrSpaceEngine"];
+	        this.ocrSpacePlan = source["ocrSpacePlan"];
+	        this.tesseractPath = source["tesseractPath"];
+	        this.selectedFiles = source["selectedFiles"];
 	    }
 	}
 	export class RenamePreview {
@@ -141,6 +163,12 @@ export namespace app {
 	    scanMode: string;
 	    totalFiles: number;
 	    processedFiles: string[];
+	    provider: string;
+	    ocrSpaceApiKey: string;
+	    ocrSpaceEngine: number;
+	    ocrSpacePlan: string;
+	    tesseractPath: string;
+	    selectedFiles: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Session(source);
@@ -158,7 +186,61 @@ export namespace app {
 	        this.scanMode = source["scanMode"];
 	        this.totalFiles = source["totalFiles"];
 	        this.processedFiles = source["processedFiles"];
+	        this.provider = source["provider"];
+	        this.ocrSpaceApiKey = source["ocrSpaceApiKey"];
+	        this.ocrSpaceEngine = source["ocrSpaceEngine"];
+	        this.ocrSpacePlan = source["ocrSpacePlan"];
+	        this.tesseractPath = source["tesseractPath"];
+	        this.selectedFiles = source["selectedFiles"];
 	    }
+	}
+	export class UsageRecord {
+	    date: string;
+	    provider: string;
+	    plan: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UsageRecord(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.date = source["date"];
+	        this.provider = source["provider"];
+	        this.plan = source["plan"];
+	        this.count = source["count"];
+	    }
+	}
+	export class UsageStats {
+	    records: UsageRecord[];
+	
+	    static createFrom(source: any = {}) {
+	        return new UsageStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.records = this.convertValues(source["records"], UsageRecord);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

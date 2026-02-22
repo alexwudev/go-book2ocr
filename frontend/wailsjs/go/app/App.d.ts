@@ -4,9 +4,13 @@ import {app} from '../models';
 
 export function ClearSession():Promise<void>;
 
-export function ComputeRenamePreview(arg1:Array<app.ImageInfo>,arg2:number,arg3:number,arg4:number):Promise<Array<app.RenamePreview>>;
+export function ClearUsageStats():Promise<void>;
 
-export function ComputeRenamePreviewSingle(arg1:Array<app.ImageInfo>,arg2:number,arg3:number,arg4:number):Promise<Array<app.RenamePreview>>;
+export function ComputeRenamePreview(arg1:Array<app.ImageInfo>,arg2:number,arg3:number):Promise<Array<app.RenamePreview>>;
+
+export function ComputeRenamePreviewSingle(arg1:Array<app.ImageInfo>,arg2:number,arg3:number):Promise<Array<app.RenamePreview>>;
+
+export function DetectTesseract():Promise<string>;
 
 export function ExecuteRename(arg1:string,arg2:Array<app.RenamePreview>):Promise<void>;
 
@@ -22,13 +26,17 @@ export function GetImageThumbnail(arg1:string,arg2:number):Promise<string>;
 
 export function GetPendingSession():Promise<app.Session>;
 
+export function GetUsageStats():Promise<app.UsageStats>;
+
 export function IsOCRRunning():Promise<boolean>;
 
 export function LoadImagesFromFolder(arg1:string):Promise<Array<app.ImageInfo>>;
 
+export function RecordApiCall(arg1:string,arg2:string):Promise<void>;
+
 export function SaveConfig(arg1:app.AppConfig):Promise<void>;
 
-export function SelectDirectory(arg1:string):Promise<string>;
+export function SelectDirectory(arg1:string,arg2:string):Promise<string>;
 
 export function SelectFile(arg1:string,arg2:string,arg3:string):Promise<string>;
 

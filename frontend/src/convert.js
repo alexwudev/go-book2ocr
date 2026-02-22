@@ -103,11 +103,10 @@ async function setupConvertEvents() {
 async function selectConvertDir() {
     try {
         const app = await getApp();
-        const dir = await app.SelectDirectory(t('label.imageDir'));
+        const dir = await app.SelectDirectory(t('label.imageDir'), convertDir);
         if (!dir) return;
 
         convertDir = dir;
-        document.getElementById('convert-dir-label').textContent = dir;
         await loadConvertFileList(dir);
         document.getElementById('start-convert-btn').disabled = false;
     } catch (e) {
@@ -121,6 +120,9 @@ async function loadConvertFileList(dir) {
         const metadata = await app.GetImageMetadataList(dir);
         const list = document.getElementById('convert-file-list');
         list.innerHTML = '';
+
+        // Update path label with count
+        document.getElementById('convert-dir-label').textContent = dir + ' (' + metadata.length + ')';
 
         if (metadata.length === 0) {
             list.innerHTML = '<div class="convert-empty">' + t('msg.noImagesInDir') + '</div>';

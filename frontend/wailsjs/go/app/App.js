@@ -6,12 +6,20 @@ export function ClearSession() {
   return window['go']['app']['App']['ClearSession']();
 }
 
-export function ComputeRenamePreview(arg1, arg2, arg3, arg4) {
-  return window['go']['app']['App']['ComputeRenamePreview'](arg1, arg2, arg3, arg4);
+export function ClearUsageStats() {
+  return window['go']['app']['App']['ClearUsageStats']();
 }
 
-export function ComputeRenamePreviewSingle(arg1, arg2, arg3, arg4) {
-  return window['go']['app']['App']['ComputeRenamePreviewSingle'](arg1, arg2, arg3, arg4);
+export function ComputeRenamePreview(arg1, arg2, arg3) {
+  return window['go']['app']['App']['ComputeRenamePreview'](arg1, arg2, arg3);
+}
+
+export function ComputeRenamePreviewSingle(arg1, arg2, arg3) {
+  return window['go']['app']['App']['ComputeRenamePreviewSingle'](arg1, arg2, arg3);
+}
+
+export function DetectTesseract() {
+  return window['go']['app']['App']['DetectTesseract']();
 }
 
 export function ExecuteRename(arg1, arg2) {
@@ -42,6 +50,10 @@ export function GetPendingSession() {
   return window['go']['app']['App']['GetPendingSession']();
 }
 
+export function GetUsageStats() {
+  return window['go']['app']['App']['GetUsageStats']();
+}
+
 export function IsOCRRunning() {
   return window['go']['app']['App']['IsOCRRunning']();
 }
@@ -50,12 +62,16 @@ export function LoadImagesFromFolder(arg1) {
   return window['go']['app']['App']['LoadImagesFromFolder'](arg1);
 }
 
+export function RecordApiCall(arg1, arg2) {
+  return window['go']['app']['App']['RecordApiCall'](arg1, arg2);
+}
+
 export function SaveConfig(arg1) {
   return window['go']['app']['App']['SaveConfig'](arg1);
 }
 
-export function SelectDirectory(arg1) {
-  return window['go']['app']['App']['SelectDirectory'](arg1);
+export function SelectDirectory(arg1, arg2) {
+  return window['go']['app']['App']['SelectDirectory'](arg1, arg2);
 }
 
 export function SelectFile(arg1, arg2, arg3) {

@@ -27,6 +27,8 @@ type App struct {
 	ctx            context.Context
 	config         AppConfig
 	session        *Session
+	stats          UsageStats
+	statsMu        sync.Mutex
 	cancelOCR      context.CancelFunc
 	cancelConvert  context.CancelFunc
 	ocrRunning     bool
@@ -47,6 +49,7 @@ func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	a.loadConfig()
 	a.loadSession()
+	a.loadStats()
 	taskbar.Init()
 }
 
@@ -148,11 +151,38 @@ func (a *App) saveSession(s *Session) {
 
 // --- Native dialogs ---
 
-// SelectDirectory opens a native directory picker
-func (a *App) SelectDirectory(title string) (string, error) {
-	return wailsRuntime.OpenDirectoryDialog(a.ctx, wailsRuntime.OpenDialogOptions{
-		Title: title,
-	})
+// SelectDirectory opens a native directory picker that shows both files and
+// folders. On Windows a custom IFileOpenDialog with FOS_PICKFOLDERS is used
+// (bypassing Wails' built-in dialog which has issues on some systems).
+// On other platforms the Wails OpenDirectoryDialog is used.
+func (a *App) SelectDirectory(title string, defaultDir string) (string, error) {
+	resolved := resolveDefaultDir(defaultDir)
+	return a.selectDirectoryNative(title, resolved)
+}
+
+// resolveDefaultDir returns an existing directory for use as DefaultDirectory.
+// It walks up parent directories if the given path doesn't exist,
+// and falls back to the user's home directory.
+func resolveDefaultDir(dir string) string {
+	if dir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return ""
+		}
+		return home
+	}
+	d := dir
+	for d != "" && d != filepath.Dir(d) {
+		if info, err := os.Stat(d); err == nil && info.IsDir() {
+			return d
+		}
+		d = filepath.Dir(d)
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return home
 }
 
 // SelectFile opens a native file picker

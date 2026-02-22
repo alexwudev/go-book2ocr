@@ -8,7 +8,7 @@
   <a href="../README.md">English</a> | <a href="README.zh-TW.md">繁體中文</a> | <a href="README.zh-CN.md">简体中文</a> | 日本語
 </p>
 
-バッチ OCR 処理用のデスクトップアプリケーションです。[Wails](https://wails.io/)（Go バックエンド + Web フロントエンド）で構築されており、[Google Cloud Vision API](https://cloud.google.com/vision) を使用してスキャンした書籍ページからテキストを認識し、検索可能な PDF を出力します。**Windows** と **Linux** に対応しています。
+バッチ OCR 処理用のデスクトップアプリケーションです。[Wails](https://wails.io/)（Go バックエンド + Web フロントエンド）で構築されており、3つの OCR エンジン — [Google Cloud Vision API](https://cloud.google.com/vision)、[OCR.space](https://ocr.space/)、[Tesseract](https://github.com/tesseract-ocr/tesseract)（ローカル／オフライン） — に対応し、スキャンした書籍ページからテキストを認識して検索可能な PDF を出力します。**Windows** と **Linux** に対応しています。
 
 **ユースケース**
 - 書籍、雑誌、歴史的文書をスキャンまたは撮影してデジタル化
@@ -67,8 +67,9 @@
                      ▼
 ┌─────────────────────────────────────────┐
 │  4. 一括 OCR → PDF               [OCR] │
-│     Google Cloud Vision API で画像を    │
-│     送信し、ページごとに PDF を生成     │
+│     OCR エンジンで画像を認識            │
+│     （Cloud Vision / OCR.space /        │
+│      Tesseract）、ページごとに PDF 生成 │
 └────────────────────┬────────────────────┘
                      │
                      ▼
@@ -88,7 +89,7 @@
 - 実行前に変更前後のファイル名をプレビュー
 
 <h3 id="一括-ocr">一括 OCR <a href="#目次">⬆</a></h3>
-- Google Cloud Vision API に画像を送信してテキスト認識
+- **3つの OCR エンジン**：Google Cloud Vision API（クラウド、最高精度）、OCR.space（クラウド、無料枠あり）、Tesseract（ローカル／オフライン、完全無料）
 - **見開きモード**：見開きスキャンから左右のページを分割し、それぞれ独立した PDF ページとして出力
 - **単ページモード**：1枚の画像 = 1ページの PDF
 - 並行処理（1〜10 ワーカーで設定可能）
@@ -166,7 +167,10 @@ scripts\build.bat          # Windows 環境
 <h3 id="ocr-タブ">OCR タブ <a href="#目次">⬆</a></h3>
 
 1. **画像フォルダを選択** をクリック — リネーム済み画像のフォルダを選択
-2. **API キーを選択** をクリック — Google Cloud サービスアカウントの JSON ファイルを選択
+2. **OCR エンジン** を選択：
+   - **Google Cloud Vision** — サービスアカウント JSON キーファイルを選択
+   - **OCR.space** — API Key を入力し、エンジンとプランを選択
+   - **Tesseract（ローカル）** — `tesseract.exe` のパスを設定（自動検出またはブラウズ）
 3. **言語** を設定（例：`ja` は日本語、`zh-CN` は簡体字中国語、`en` は英語）
 4. **同時実行数** を調整（デフォルト 5、最大 10）
 5. すべての出力 PDF を1つのファイルに**結合**するかどうかを選択
@@ -196,7 +200,10 @@ scripts\build.bat          # Windows 環境
 
 **両プラットフォーム共通：**
 
-- **Google Cloud Vision API** の認証情報（サービスアカウント JSON キー）— 下記のセットアップを参照
+- **少なくとも1つの OCR エンジンの設定：**
+  - **Google Cloud Vision API** — サービスアカウント JSON キー（下記のセットアップを参照）
+  - **OCR.space** — 無料 API Key（[ocr.space](https://ocr.space/ocrapi/freekey) から取得可能）
+  - **Tesseract** — [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) をインストール（完全無料、インターネット不要）
 - **CJK 対応フォント**（中国語・日本語・韓国語のテキストを OCR する場合のみ必要）— 下記のセットアップを参照
 
 <h2 id="セットアップ">セットアップ <a href="#目次">⬆</a></h2>
@@ -264,6 +271,8 @@ cp docs/config.example.json config.json
 | `theme` | `"dark"` または `"light"` |
 | `scanMode` | `"dual"`（見開きスキャン）または `"single"`（単ページスキャン） |
 | `uiLang` | UI 言語コード（例：`"zh-TW"`、`"en"`、`"ja"`） |
+| `provider` | OCR エンジン：`"google"`、`"ocrspace"`、`"tesseract"` |
+| `tesseractPath` | `tesseract.exe` のパス（Tesseract エンジン使用時のみ必要） |
 
 <h2 id="ソースからのビルド">ソースからのビルド <a href="#目次">⬆</a></h2>
 
@@ -343,6 +352,9 @@ go-book2ocr/
 │   │   ├── app.go       # コアアプリ構造体、設定、セッション、サムネイル
 │   │   ├── models.go    # 共有データ型
 │   │   ├── ocr.go       # OCR パイプライン、Vision API、PDF 生成
+│   │   ├── ocrspace.go  # OCR.space API 連携
+│   │   ├── tesseract.go # Tesseract サブプロセス連携
+│   │   ├── stats.go     # 使用統計トラッキング
 │   │   ├── rename.go    # 一括リネームロジック、ページ番号付与
 │   │   └── convert.go   # 画像リサイズ／変換
 │   └── taskbar/

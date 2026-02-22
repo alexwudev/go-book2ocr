@@ -3,6 +3,7 @@ import { t } from './i18n.js';
 let currentImages = [];
 let currentDir = '';
 let currentPreviews = [];
+let renameLastClickedIdx = -1;
 
 let App = null;
 
@@ -136,6 +137,7 @@ function updateBatchTypeOptions() {
         <option value="TypeA" ${isSingle ? 'hidden' : ''}>${t('pageType.typeA')}</option>
         <option value="TypeB">${typeBLabel}</option>
         <option value="TypeC" ${isSingle ? 'hidden' : ''}>${t('pageType.typeC')}</option>
+        <option value="NoIncluding">${t('pageType.noIncluding')}</option>
         <option value="Skip">${t('pageType.skip')}</option>
     `;
     // Restore previous selection if still valid
@@ -159,14 +161,14 @@ async function selectFolder() {
     try {
         log(t('msg.openingFolderDialog'), false);
         const app = await getApp();
-        const dir = await app.SelectDirectory(t('label.imageDir'));
+        const dir = await app.SelectDirectory(t('label.imageDir'), currentDir);
         if (!dir) { log(t('msg.noFolderSelected'), false); return; }
 
         currentDir = dir;
-        document.getElementById('rename-dir-label').textContent = dir;
 
         log(t('msg.loadingImages') + dir, false);
-        currentImages = await app.LoadImagesFromFolder(dir);
+        currentImages = await app.LoadImagesFromFolder(dir) || [];
+        document.getElementById('rename-dir-label').textContent = dir + ' (' + currentImages.length + ')';
         log(t('msg.loadedImages', { count: currentImages.length }), false);
         currentPreviews = [];
         renderImageList(currentImages);
@@ -198,7 +200,7 @@ async function reloadFolder() {
     try {
         log(t('msg.reloadFolder') + currentDir, false);
         const app = await getApp();
-        currentImages = await app.LoadImagesFromFolder(currentDir);
+        currentImages = await app.LoadImagesFromFolder(currentDir) || [];
 
         // Restore saved settings by filename
         let restored = 0;
@@ -211,6 +213,7 @@ async function reloadFolder() {
             }
         });
 
+        document.getElementById('rename-dir-label').textContent = currentDir + ' (' + currentImages.length + ')';
         let msg = t('msg.loadedImages', { count: currentImages.length });
         if (restored > 0) {
             msg += t('msg.restoredSettings', { count: restored });
@@ -226,6 +229,7 @@ async function reloadFolder() {
 }
 
 function renderImageList(images) {
+    renameLastClickedIdx = -1;
     const list = document.getElementById('image-list');
     list.innerHTML = '';
     const mode = getScanModeRename();
@@ -255,6 +259,7 @@ function renderImageList(images) {
                         <option value="TypeA" ${img.pageType === 'TypeA' ? 'selected' : ''} ${hiddenA}>${t('pageType.typeA')}</option>
                         <option value="TypeB" ${img.pageType === 'TypeB' ? 'selected' : ''}>${typeBLabel}</option>
                         <option value="TypeC" ${img.pageType === 'TypeC' ? 'selected' : ''} ${hiddenC}>${t('pageType.typeC')}</option>
+                        <option value="NoIncluding" ${img.pageType === 'NoIncluding' ? 'selected' : ''}>${t('pageType.noIncluding')}</option>
                         <option value="Skip" ${img.pageType === 'Skip' ? 'selected' : ''}>${t('pageType.skip')}</option>
                     </select>
                     <input class="page-override-input" data-idx="${idx}" type="number" min="1" placeholder="${placeholder}" value="${overrideVal}" title="${t('tooltip.overridePage')}">
@@ -263,14 +268,28 @@ function renderImageList(images) {
         `;
         list.appendChild(item);
 
-        // Checkbox for batch selection
-        item.querySelector('.thumb-checkbox').addEventListener('change', (e) => {
+        // Checkbox for batch selection with shift+click range support
+        item.querySelector('.thumb-checkbox').addEventListener('click', (e) => {
             e.stopPropagation();
-            item.classList.toggle('selected', e.target.checked);
+            const cb = e.target;
+            const currentIdx = parseInt(cb.dataset.idx);
+            if (e.shiftKey && renameLastClickedIdx >= 0) {
+                const from = Math.min(renameLastClickedIdx, currentIdx);
+                const to = Math.max(renameLastClickedIdx, currentIdx);
+                const state = cb.checked;
+                for (let i = from; i <= to; i++) {
+                    const box = list.querySelector(`.thumb-checkbox[data-idx="${i}"]`);
+                    if (box) {
+                        box.checked = state;
+                        box.closest('.image-item').classList.toggle('selected', state);
+                    }
+                }
+            } else {
+                item.classList.toggle('selected', cb.checked);
+            }
+            renameLastClickedIdx = currentIdx;
             updateBatchCount();
         });
-        // Prevent checkbox click from triggering preview
-        item.querySelector('.thumb-checkbox').addEventListener('click', (e) => e.stopPropagation());
 
         const thumbContainer = item.querySelector('.thumb-container');
         thumbContainer.addEventListener('click', togglePreview);
@@ -399,18 +418,17 @@ async function previewRename() {
     try {
         log(t('msg.previewCalculating'), false);
         const app = await getApp();
-        const arabicStartIdx = parseInt(document.getElementById('arabic-start-idx').value) || 0;
-        const romanStart = parseInt(document.getElementById('roman-start').value) || 1;
-        const arabicStart = parseInt(document.getElementById('arabic-start').value) || 1;
+        const bodyStartIdx = parseInt(document.getElementById('body-start-idx').value) || 0;
+        const bodyStart = parseInt(document.getElementById('body-start').value) || 1;
         const mode = getScanModeRename();
 
         if (mode === 'single') {
             currentPreviews = await app.ComputeRenamePreviewSingle(
-                currentImages, arabicStartIdx, romanStart, arabicStart
+                currentImages, bodyStartIdx, bodyStart
             );
         } else {
             currentPreviews = await app.ComputeRenamePreview(
-                currentImages, arabicStartIdx, romanStart, arabicStart
+                currentImages, bodyStartIdx, bodyStart
             );
         }
 
@@ -457,7 +475,7 @@ async function executeRename() {
         await app.ExecuteRename(currentDir, currentPreviews);
         showSuccess(t('msg.renameComplete'));
 
-        currentImages = await app.LoadImagesFromFolder(currentDir);
+        currentImages = await app.LoadImagesFromFolder(currentDir) || [];
         currentPreviews = [];
         renderImageList(currentImages);
         document.getElementById('execute-rename-btn').disabled = true;

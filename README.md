@@ -8,7 +8,7 @@
   English | <a href="docs/README.zh-TW.md">繁體中文</a> | <a href="docs/README.zh-CN.md">简体中文</a> | <a href="docs/README.ja.md">日本語</a>
 </p>
 
-A desktop application for batch OCR processing, built with [Wails](https://wails.io/) (Go backend + Web frontend). It uses the [Google Cloud Vision API](https://cloud.google.com/vision) to recognize text from scanned book pages and outputs searchable PDFs. Supports **Windows** and **Linux**.
+A desktop application for batch OCR processing, built with [Wails](https://wails.io/) (Go backend + Web frontend). It supports three OCR engines — [Google Cloud Vision API](https://cloud.google.com/vision), [OCR.space](https://ocr.space/), and [Tesseract](https://github.com/tesseract-ocr/tesseract) (local/offline) — to recognize text from scanned book pages and output searchable PDFs. Supports **Windows** and **Linux**.
 
 <h2 id="table-of-contents">Table of Contents</h2>
 
@@ -60,8 +60,9 @@ A desktop application for batch OCR processing, built with [Wails](https://wails
                      ▼
 ┌─────────────────────────────────────────┐
 │  4. Batch OCR → PDF               [OCR] │
-│     Send images to Google Cloud Vision  │
-│     API, generate one PDF per page      │
+│     Send images to an OCR engine        │
+│     (Cloud Vision / OCR.space /         │
+│      Tesseract), one PDF per page       │
 └────────────────────┬────────────────────┘
                      │
                      ▼
@@ -81,7 +82,7 @@ A desktop application for batch OCR processing, built with [Wails](https://wails
 - Preview old/new filenames before executing
 
 <h3 id="batch-ocr">Batch OCR <a href="#table-of-contents">⬆</a></h3>
-- Send images to Google Cloud Vision API for text recognition
+- **Three OCR engines**: Google Cloud Vision API (cloud, highest accuracy), OCR.space (cloud, free tier available), Tesseract (local/offline, completely free)
 - **Dual-page mode**: split left/right pages from a two-page scan into separate PDF pages
 - **Single-page mode**: one image = one PDF page
 - Concurrent processing (configurable 1-10 workers)
@@ -159,7 +160,10 @@ This tool is designed for digitizing scanned books. The typical workflow is:
 <h3 id="ocr-tab">OCR Tab <a href="#table-of-contents">⬆</a></h3>
 
 1. Click **Select Image Folder** — choose the folder with renamed images (from step above)
-2. Click **Select API Key** — choose your Google Cloud service account JSON file
+2. Select an **OCR engine**:
+   - **Google Cloud Vision** — select your service account JSON key file
+   - **OCR.space** — enter your API key and choose an engine/plan
+   - **Tesseract (Local)** — set the path to `tesseract.exe` (use Auto Detect or browse manually)
 3. Set the **language** (e.g. `zh-CN` for Simplified Chinese, `en` for English)
 4. Adjust **concurrency** (default 5, max 10)
 5. Choose whether to **merge** all output PDFs into one file
@@ -189,7 +193,10 @@ This tool is designed for digitizing scanned books. The typical workflow is:
 
 **Both platforms:**
 
-- **Google Cloud Vision API** credentials (service account JSON key) — see setup below
+- **At least one OCR engine configured:**
+  - **Google Cloud Vision API** — service account JSON key (see setup below)
+  - **OCR.space** — free API key from [ocr.space](https://ocr.space/ocrapi/freekey)
+  - **Tesseract** — install [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) locally (completely free, no internet required)
 - **A CJK-capable font** (required only if you OCR Chinese/Japanese/Korean text) — see setup below
 
 <h2 id="setup">Setup <a href="#table-of-contents">⬆</a></h2>
@@ -257,6 +264,8 @@ cp docs/config.example.json config.json
 | `theme` | `"dark"` or `"light"` |
 | `scanMode` | `"dual"` (two-page scan) or `"single"` (one-page scan) |
 | `uiLang` | UI language code (e.g. `"zh-TW"`, `"en"`, `"ja"`) |
+| `provider` | OCR engine: `"google"`, `"ocrspace"`, or `"tesseract"` |
+| `tesseractPath` | Path to `tesseract.exe` (only needed for Tesseract engine) |
 
 <h2 id="building-from-source">Building from Source <a href="#table-of-contents">⬆</a></h2>
 
@@ -336,6 +345,9 @@ go-book2ocr/
 │   │   ├── app.go       # Core app struct, config, session, thumbnails
 │   │   ├── models.go    # Shared data types
 │   │   ├── ocr.go       # OCR pipeline, Vision API, PDF generation
+│   │   ├── ocrspace.go  # OCR.space API integration
+│   │   ├── tesseract.go # Tesseract subprocess integration
+│   │   ├── stats.go     # Usage statistics tracking
 │   │   ├── rename.go    # Batch rename logic, page numbering
 │   │   └── convert.go   # Image resize/conversion
 │   └── taskbar/

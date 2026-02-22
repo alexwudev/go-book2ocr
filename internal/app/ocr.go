@@ -115,27 +115,13 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 	}
 	emitLog("", fmt.Sprintf("Scan mode: %s", modeLabel), 0, 0, false)
 
-	// Scan files
-	allFiles, err := filepath.Glob(filepath.Join(settings.ImageDir, "Page-*.*"))
-	if err != nil {
-		emitLog("", fmt.Sprintf("Scan failed: %v", err), 0, 0, true)
-		return
-	}
-
-	var files []string
-	for _, f := range allFiles {
-		if matchesOCRPattern(filepath.Base(f), settings.ScanMode) {
-			files = append(files, f)
-		}
-	}
+	// Use selected files from frontend
+	files := make([]string, len(settings.SelectedFiles))
+	copy(files, settings.SelectedFiles)
 	sort.Strings(files)
 
 	if len(files) == 0 {
-		if settings.ScanMode == "single" {
-			emitLog("", "No matching files found (single-page: Page-NNN or Page-r-xxx format)", 0, 0, true)
-		} else {
-			emitLog("", "No matching files found (dual-page: Page-NNN-NNN or Page-r-xxx-xxx format)", 0, 0, true)
-		}
+		emitLog("", "No files selected", 0, 0, true)
 		return
 	}
 
@@ -178,13 +164,17 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 		return
 	}
 
-	// Create Vision API client
-	client, err := vision.NewImageAnnotatorClient(ctx, option.WithCredentialsFile(settings.CredFile))
-	if err != nil {
-		emitLog("", fmt.Sprintf("Cannot create Vision API client: %v", err), 0, 0, true)
-		return
+	// Create Vision API client (only for Google provider)
+	var visionClient *vision.ImageAnnotatorClient
+	if settings.Provider == "google" {
+		client, err := vision.NewImageAnnotatorClient(ctx, option.WithCredentialsFile(settings.CredFile))
+		if err != nil {
+			emitLog("", fmt.Sprintf("Cannot create Vision API client: %v", err), 0, 0, true)
+			return
+		}
+		defer client.Close()
+		visionClient = client
 	}
-	defer client.Close()
 
 	// Initialize session
 	session := &Session{
@@ -198,6 +188,12 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 		ScanMode:       settings.ScanMode,
 		TotalFiles:     totalFiles,
 		ProcessedFiles: make([]string, 0, len(processedSet)),
+		Provider:       settings.Provider,
+		OcrSpaceApiKey: settings.OcrSpaceApiKey,
+		OcrSpaceEngine: settings.OcrSpaceEngine,
+		OcrSpacePlan:   settings.OcrSpacePlan,
+		TesseractPath:  settings.TesseractPath,
+		SelectedFiles:  settings.SelectedFiles,
 	}
 	for f := range processedSet {
 		session.ProcessedFiles = append(session.ProcessedFiles, f)
@@ -271,7 +267,7 @@ func (a *App) runOCRPipeline(ctx context.Context, settings OCRSettings) {
 			default:
 			}
 
-			err := a.processOneImage(ctx, client, fp, settings, fontPath)
+			err := a.processOneImage(ctx, visionClient, fp, settings, fontPath)
 
 			cur := int(atomic.AddInt64(&processed, 1)) + alreadyDone
 
@@ -329,6 +325,40 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 	pdfName := strings.TrimSuffix(baseName, filepath.Ext(baseName)) + ".pdf"
 	outputPath := filepath.Join(settings.OutputDir, pdfName)
 
+	// OCR.space provider: simple text extraction (no coordinate-based splitting)
+	if settings.Provider == "ocrspace" {
+		text, err := a.callOcrSpace(filePath, settings)
+		if err != nil {
+			return err
+		}
+		if settings.ScanMode == "single" {
+			label := pageLabelFromFilenameSingle(baseName)
+			return generateSinglePagePDF(outputPath, text, label, fontPath)
+		}
+		// Dual-page: OCR.space doesn't provide coordinates, put all text on both pages
+		leftLabel, rightLabel := pageLabelsFromFilename(baseName)
+		return generatePDFWithAnnotation(outputPath, text, "", leftLabel, rightLabel, fontPath)
+	}
+
+	// Tesseract provider: local OCR, no coordinates
+	if settings.Provider == "tesseract" {
+		text, err := a.callTesseract(filePath, settings)
+		if err != nil {
+			return err
+		}
+		if settings.ScanMode == "single" {
+			label := pageLabelFromFilenameSingle(baseName)
+			return generateSinglePagePDF(outputPath, text, label, fontPath)
+		}
+		leftLabel, rightLabel := pageLabelsFromFilename(baseName)
+		return generatePDFWithAnnotation(outputPath, text, "", leftLabel, rightLabel, fontPath)
+	}
+
+	// Google Vision provider
+	return a.processOneImageGoogle(ctx, client, filePath, outputPath, baseName, settings, fontPath)
+}
+
+func (a *App) processOneImageGoogle(ctx context.Context, client *vision.ImageAnnotatorClient, filePath, outputPath, baseName string, settings OCRSettings, fontPath string) error {
 	imgData, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("read: %w", err)
@@ -360,6 +390,8 @@ func (a *App) processOneImage(ctx context.Context, client *vision.ImageAnnotator
 	if resp.Error != nil {
 		return fmt.Errorf("API error: %s", resp.Error.Message)
 	}
+
+	a.RecordApiCall("google", "")
 
 	if settings.ScanMode == "single" {
 		if resp.FullTextAnnotation == nil {

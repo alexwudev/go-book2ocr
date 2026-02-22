@@ -1,6 +1,7 @@
 import { initRenameTab } from './rename.js';
 import { initOCRTab, resumeOCR } from './ocr.js';
 import { initConvertTab } from './convert.js';
+import { initStatsTab } from './stats.js';
 import { initTheme } from './theme.js';
 import { t, setLanguage, uiLanguages, getCurrentLang } from './i18n.js';
 
@@ -74,6 +75,13 @@ async function init() {
         log(t('msg.convertTabInitFailed') + e, true);
     }
 
+    try {
+        await initStatsTab();
+        log(t('status.statsTabInit'), false);
+    } catch (e) {
+        log(t('msg.statsTabInitFailed') + e, true);
+    }
+
     // Check for pending session
     try {
         const session = await App.GetPendingSession();
@@ -121,6 +129,14 @@ function initLanguageSelector(savedLang, App) {
 }
 
 function switchTab(tabName) {
+    // Close any open hover preview
+    const preview = document.getElementById('hover-preview');
+    if (preview) {
+        preview.classList.add('hidden');
+        const img = document.getElementById('hover-preview-img');
+        if (img) img.src = '';
+    }
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabName);
     });

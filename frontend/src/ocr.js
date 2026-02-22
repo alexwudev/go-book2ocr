@@ -7,6 +7,9 @@ let logLines = [];
 let ocrImageDir = '';
 let ocrOutputDir = '';
 let ocrOutputManuallySet = false;
+let ocrImages = [];
+let ocrActivePreviewPath = null;
+let ocrLastClickedIdx = -1;
 
 function showOCRError(msg) {
     // Show error as a log entry so it's visible and copyable
@@ -47,6 +50,46 @@ export async function initOCRTab(config) {
         });
     });
 
+    // Provider toggle: show/hide provider-specific fields
+    document.querySelectorAll('input[name="ocr-provider"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const selected = e.target.value;
+            ['google', 'ocrspace', 'tesseract'].forEach(p => {
+                document.querySelectorAll(`.provider-${p}`).forEach(el =>
+                    el.classList.toggle('hidden', selected !== p));
+            });
+        });
+    });
+
+    // Tesseract: browse for tesseract.exe
+    document.getElementById('tesseract-browse-btn').addEventListener('click', async () => {
+        try {
+            const app = await getApp();
+            const file = await app.SelectFile(t('label.tesseractPath'), 'Tesseract (tesseract.exe)', '*.exe');
+            if (file) {
+                document.getElementById('tesseract-path-label').textContent = file;
+            }
+        } catch (e) {
+            console.error('Failed to select tesseract path:', e);
+        }
+    });
+
+    // Tesseract: auto-detect
+    document.getElementById('tesseract-detect-btn').addEventListener('click', async () => {
+        try {
+            const app = await getApp();
+            const path = await app.DetectTesseract();
+            if (path) {
+                document.getElementById('tesseract-path-label').textContent = path;
+                appendLog({ message: t('msg.tesseractDetected', { path }), isError: false, filename: '' });
+            } else {
+                appendLog({ message: t('msg.tesseractNotFound'), isError: true, filename: '' });
+            }
+        } catch (e) {
+            console.error('Failed to detect tesseract:', e);
+        }
+    });
+
     // Concurrency slider
     const slider = document.getElementById('concurrency-slider');
     slider.addEventListener('input', (e) => {
@@ -80,6 +123,64 @@ export async function initOCRTab(config) {
         const renameRadio = document.querySelector(`input[name="scan-mode-rename"][value="${config.scanMode}"]`);
         if (renameRadio) renameRadio.checked = true;
     }
+
+    // Restore provider selection
+    if (config.provider) {
+        const providerRadio = document.querySelector(`input[name="ocr-provider"][value="${config.provider}"]`);
+        if (providerRadio) {
+            providerRadio.checked = true;
+            providerRadio.dispatchEvent(new Event('change'));
+        }
+    }
+    if (config.ocrSpaceApiKey) {
+        document.getElementById('ocrspace-apikey').value = config.ocrSpaceApiKey;
+    }
+    if (config.ocrSpaceEngine) {
+        document.getElementById('ocrspace-engine').value = config.ocrSpaceEngine;
+    }
+    if (config.ocrSpacePlan) {
+        const planRadio = document.querySelector(`input[name="ocrspace-plan"][value="${config.ocrSpacePlan}"]`);
+        if (planRadio) planRadio.checked = true;
+    }
+    if (config.tesseractPath) {
+        document.getElementById('tesseract-path-label').textContent = config.tesseractPath;
+    }
+
+    // Restore last used imageDir from config and auto-load images
+    if (config.imageDir) {
+        ocrImageDir = config.imageDir;
+        try {
+            const app = await getApp();
+            ocrImages = await app.LoadImagesFromFolder(config.imageDir) || [];
+            document.getElementById('ocr-image-dir-label').textContent = config.imageDir + ' (' + ocrImages.length + ')';
+            if (ocrImages.length > 0) renderOCRImageList(ocrImages);
+            // Auto-set output dir if not manually set
+            if (!ocrOutputManuallySet && !config.outputDir) {
+                ocrOutputDir = await app.GetDefaultOutputDir(config.imageDir);
+                document.getElementById('ocr-output-dir-label').textContent = ocrOutputDir;
+            }
+        } catch (e) {
+            console.error('Failed to restore imageDir:', e);
+            document.getElementById('ocr-image-dir-label').textContent = config.imageDir;
+        }
+    }
+
+    // OCR batch select-all checkbox
+    document.getElementById('ocr-batch-select-all').addEventListener('change', (e) => {
+        document.querySelectorAll('.ocr-thumb-checkbox').forEach(cb => {
+            cb.checked = e.target.checked;
+            cb.closest('.image-item').classList.toggle('selected', e.target.checked);
+        });
+        updateOCRBatchCount();
+    });
+
+    // OCR sub-tab switching
+    document.querySelectorAll('#tab-ocr .subtab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchOCRSubtab(btn.dataset.subtab));
+    });
+
+    // Click on hover-preview to close (from OCR tab)
+    document.getElementById('hover-preview').addEventListener('click', ocrClosePreview);
 
     // Set up event listeners from Go
     setupOCREvents();
@@ -200,11 +301,16 @@ function appendLog(entry) {
 async function selectImageDir() {
     try {
         const app = await getApp();
-        const dir = await app.SelectDirectory(t('msg.selectImageDir'));
+        const dir = await app.SelectDirectory(t('msg.selectImageDir'), ocrImageDir);
         if (!dir) return;
 
         ocrImageDir = dir;
-        document.getElementById('ocr-image-dir-label').textContent = dir;
+
+        // Load images and render list
+        ocrImages = await app.LoadImagesFromFolder(dir) || [];
+        document.getElementById('ocr-image-dir-label').textContent = dir + ' (' + ocrImages.length + ')';
+        renderOCRImageList(ocrImages);
+        switchOCRSubtab('ocr-preview');
 
         // Auto-set output dir if not manually set
         if (!ocrOutputManuallySet) {
@@ -219,7 +325,7 @@ async function selectImageDir() {
 async function selectOutputDir() {
     try {
         const app = await getApp();
-        const dir = await app.SelectDirectory(t('label.outputDir'));
+        const dir = await app.SelectDirectory(t('label.outputDir'), ocrOutputDir);
         if (!dir) return;
 
         ocrOutputDir = dir;
@@ -252,7 +358,24 @@ function getScanModeOCR() {
     return radio ? radio.value : 'dual';
 }
 
+function getSelectedProvider() {
+    const radio = document.querySelector('input[name="ocr-provider"]:checked');
+    return radio ? radio.value : 'google';
+}
+
+function getSelectedPlan() {
+    const radio = document.querySelector('input[name="ocrspace-plan"]:checked');
+    return radio ? radio.value : 'free';
+}
+
 function gatherSettings() {
+    // Collect checked file paths
+    const selectedFiles = [];
+    document.querySelectorAll('.ocr-thumb-checkbox:checked').forEach(cb => {
+        const idx = parseInt(cb.dataset.idx);
+        if (ocrImages[idx]) selectedFiles.push(ocrImages[idx].originalPath);
+    });
+
     return {
         imageDir: ocrImageDir,
         outputDir: ocrOutputDir,
@@ -262,6 +385,12 @@ function gatherSettings() {
         mergePdf: document.getElementById('merge-pdf-check').checked,
         mergeFilename: document.getElementById('merge-filename').value || 'Merge.pdf',
         scanMode: getScanModeOCR(),
+        provider: getSelectedProvider(),
+        ocrSpaceApiKey: document.getElementById('ocrspace-apikey').value.trim(),
+        ocrSpaceEngine: parseInt(document.getElementById('ocrspace-engine').value) || 1,
+        ocrSpacePlan: getSelectedPlan(),
+        tesseractPath: document.getElementById('tesseract-path-label').textContent,
+        selectedFiles: selectedFiles,
     };
 }
 
@@ -273,12 +402,28 @@ async function startOCR() {
         showOCRError(t('msg.selectImageDir'));
         return;
     }
-    if (!settings.credFile || settings.credFile.startsWith('\uFF08') || settings.credFile === t('placeholder.notSelected')) {
-        showOCRError(t('msg.selectApiKey'));
-        return;
+    if (settings.provider === 'ocrspace') {
+        if (!settings.ocrSpaceApiKey) {
+            showOCRError(t('msg.enterApiKey'));
+            return;
+        }
+    } else if (settings.provider === 'tesseract') {
+        if (!settings.tesseractPath || settings.tesseractPath.startsWith('\uFF08') || settings.tesseractPath === t('placeholder.notSelected')) {
+            showOCRError(t('msg.selectTesseractPath'));
+            return;
+        }
+    } else {
+        if (!settings.credFile || settings.credFile.startsWith('\uFF08') || settings.credFile === t('placeholder.notSelected')) {
+            showOCRError(t('msg.selectApiKey'));
+            return;
+        }
     }
     if (settings.languages.length === 0) {
         showOCRError(t('msg.selectAtLeastOneLang'));
+        return;
+    }
+    if (settings.selectedFiles.length === 0) {
+        showOCRError(t('msg.selectAtLeastOneImage'));
         return;
     }
 
@@ -306,6 +451,12 @@ async function startOCR() {
         config.mergePdf = settings.mergePdf;
         config.mergeFilename = settings.mergeFilename;
         config.scanMode = settings.scanMode;
+        config.provider = settings.provider;
+        config.ocrSpaceApiKey = settings.ocrSpaceApiKey;
+        config.ocrSpaceEngine = settings.ocrSpaceEngine;
+        config.ocrSpacePlan = settings.ocrSpacePlan;
+        config.tesseractPath = settings.tesseractPath;
+        config.imageDir = settings.imageDir;
         await app.SaveConfig(config);
     } catch (e) {
         console.error('Failed to save config:', e);
@@ -336,6 +487,9 @@ async function startOCR() {
         titlebarFill.style.width = '0%';
         titlebarFill.classList.remove('done');
     }
+
+    // Switch to log sub-tab
+    switchOCRSubtab('ocr-log');
 
     // Start OCR
     try {
@@ -383,12 +537,207 @@ export async function resumeOCR(session) {
         if (radio) radio.checked = true;
     }
 
+    // Restore provider
+    if (session.provider) {
+        const providerRadio = document.querySelector(`input[name="ocr-provider"][value="${session.provider}"]`);
+        if (providerRadio) {
+            providerRadio.checked = true;
+            providerRadio.dispatchEvent(new Event('change'));
+        }
+    }
+    if (session.ocrSpaceApiKey) {
+        document.getElementById('ocrspace-apikey').value = session.ocrSpaceApiKey;
+    }
+    if (session.ocrSpaceEngine) {
+        document.getElementById('ocrspace-engine').value = session.ocrSpaceEngine;
+    }
+    if (session.ocrSpacePlan) {
+        const planRadio = document.querySelector(`input[name="ocrspace-plan"][value="${session.ocrSpacePlan}"]`);
+        if (planRadio) planRadio.checked = true;
+    }
+    if (session.tesseractPath) {
+        document.getElementById('tesseract-path-label').textContent = session.tesseractPath;
+    }
+
     // Update language checkboxes
     const checkboxes = document.querySelectorAll('#lang-checkboxes input[type="checkbox"]');
     checkboxes.forEach(cb => {
         cb.checked = session.languages.includes(cb.value);
     });
 
+    // Restore image list from session selectedFiles
+    if (session.selectedFiles && session.selectedFiles.length > 0) {
+        ocrImages = session.selectedFiles.map((path, idx) => ({
+            originalPath: path,
+            originalName: path.split(/[\\/]/).pop(),
+            index: idx,
+        }));
+        renderOCRImageList(ocrImages);
+    }
+
     // Start OCR (session will auto-skip processed files)
     await startOCR();
+}
+
+// ===== OCR Image List =====
+
+function renderOCRImageList(images) {
+    ocrLastClickedIdx = -1;
+    const list = document.getElementById('ocr-image-list');
+    list.innerHTML = '';
+
+    // Show batch action bar
+    const bar = document.getElementById('ocr-batch-action-bar');
+    bar.classList.toggle('visible', images.length > 0);
+
+    images.forEach((img, idx) => {
+        const item = document.createElement('div');
+        item.className = 'image-item selected';
+        item.innerHTML = `
+            <div class="thumb-container" data-path="${img.originalPath}" data-idx="${idx}">
+                <span class="thumb-badge">${idx + 1}</span>
+                <input type="checkbox" class="ocr-thumb-checkbox" data-idx="${idx}" checked>
+                <div class="thumb-placeholder">${idx + 1}</div>
+            </div>
+            <div class="image-info">
+                <span class="filename" title="${img.originalName}">${img.originalName}</span>
+            </div>
+        `;
+        list.appendChild(item);
+
+        // Checkbox events with shift+click range support
+        const cb = item.querySelector('.ocr-thumb-checkbox');
+        cb.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const currentIdx = parseInt(cb.dataset.idx);
+            if (e.shiftKey && ocrLastClickedIdx >= 0) {
+                const from = Math.min(ocrLastClickedIdx, currentIdx);
+                const to = Math.max(ocrLastClickedIdx, currentIdx);
+                const state = cb.checked;
+                for (let i = from; i <= to; i++) {
+                    const box = list.querySelector(`.ocr-thumb-checkbox[data-idx="${i}"]`);
+                    if (box) {
+                        box.checked = state;
+                        box.closest('.image-item').classList.toggle('selected', state);
+                    }
+                }
+            } else {
+                item.classList.toggle('selected', cb.checked);
+            }
+            ocrLastClickedIdx = currentIdx;
+            updateOCRBatchCount();
+        });
+
+        // Click to preview
+        item.querySelector('.thumb-container').addEventListener('click', ocrTogglePreview);
+    });
+
+    // Load thumbnails in batches
+    const thumbItems = [];
+    list.querySelectorAll('.thumb-container').forEach(container => {
+        thumbItems.push({ container, path: container.dataset.path });
+    });
+    loadOCRThumbnailsBatched(thumbItems);
+
+    updateOCRBatchCount();
+}
+
+async function loadOCRThumbnailsBatched(items, batchSize = 4) {
+    for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        await Promise.all(batch.map(({ container, path }) => loadOCRThumbnailLazy(container, path)));
+    }
+}
+
+async function loadOCRThumbnailLazy(container, path) {
+    try {
+        const app = await getApp();
+        const dataUrl = await app.GetImageThumbnail(path, 180);
+        const badge = container.querySelector('.thumb-badge');
+        const checkbox = container.querySelector('.ocr-thumb-checkbox');
+        container.innerHTML = '';
+        container.appendChild(badge);
+        if (checkbox) container.appendChild(checkbox);
+        const imgEl = document.createElement('img');
+        imgEl.src = dataUrl;
+        imgEl.alt = 'thumb';
+        container.appendChild(imgEl);
+    } catch (e) {
+        console.error('OCR thumbnail load failed:', e);
+    }
+}
+
+function updateOCRBatchCount() {
+    const total = document.querySelectorAll('.ocr-thumb-checkbox').length;
+    const checked = document.querySelectorAll('.ocr-thumb-checkbox:checked').length;
+    document.getElementById('ocr-batch-count').textContent =
+        checked > 0 ? `(${checked}/${total})` : '';
+    const selectAll = document.getElementById('ocr-batch-select-all');
+    selectAll.checked = checked === total && total > 0;
+    selectAll.indeterminate = checked > 0 && checked < total;
+}
+
+// ===== OCR Sub-tab Switching =====
+
+function switchOCRSubtab(name) {
+    document.querySelectorAll('#tab-ocr .subtab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.subtab === name);
+    });
+    document.querySelectorAll('#tab-ocr .subtab-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === `subtab-${name}`);
+    });
+}
+
+// ===== OCR Click Preview =====
+
+function ocrTogglePreview(e) {
+    const thumbContainer = e.currentTarget;
+    const path = thumbContainer.dataset.path;
+    const preview = document.getElementById('hover-preview');
+
+    if (!preview.classList.contains('hidden') && ocrActivePreviewPath === path) {
+        ocrClosePreview();
+        return;
+    }
+    loadOCRClickPreview(thumbContainer);
+}
+
+function ocrClosePreview() {
+    const preview = document.getElementById('hover-preview');
+    preview.classList.add('hidden');
+    document.getElementById('hover-preview-img').src = '';
+    ocrActivePreviewPath = null;
+}
+
+async function loadOCRClickPreview(thumbContainer) {
+    const path = thumbContainer.dataset.path;
+    const preview = document.getElementById('hover-preview');
+    const img = document.getElementById('hover-preview-img');
+
+    try {
+        const app = await getApp();
+        const dataUrl = await app.GetImageThumbnail(path, 960);
+        img.src = dataUrl;
+        ocrActivePreviewPath = path;
+
+        const rect = thumbContainer.getBoundingClientRect();
+        const margin = 20;
+        const previewW = 980;
+        const previewH = 980;
+        let left = rect.right + margin;
+        let top = rect.top - 50;
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        if (left + previewW > vw) left = rect.left - previewW - margin;
+        if (left < 10) left = 10;
+        if (top < 10) top = 10;
+        if (top + previewH > vh) top = Math.max(10, vh - previewH - 10);
+
+        preview.style.left = left + 'px';
+        preview.style.top = top + 'px';
+        preview.classList.remove('hidden');
+    } catch (err) {
+        console.error('OCR preview load failed:', err);
+    }
 }

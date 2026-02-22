@@ -5,8 +5,7 @@ type ImageInfo struct {
 	OriginalPath     string `json:"originalPath"`
 	OriginalName     string `json:"originalName"`
 	Index            int    `json:"index"`
-	PageType         string `json:"pageType"` // "Normal", "TypeA", "TypeB", "TypeC"
-	IsRoman          bool   `json:"isRoman"`
+	PageType         string `json:"pageType"` // "Normal", "TypeA", "TypeB", "TypeC", "Skip", "NoIncluding"
 	LeftPageOverride int    `json:"leftPageOverride"` // 0 = auto, >0 = manual override
 }
 
@@ -21,27 +20,39 @@ type RenamePreview struct {
 
 // OCRSettings holds all OCR tab configuration
 type OCRSettings struct {
-	ImageDir      string   `json:"imageDir"`
-	OutputDir     string   `json:"outputDir"`
-	CredFile      string   `json:"credFile"`
-	Languages     []string `json:"languages"`
-	Concurrency   int      `json:"concurrency"`
-	MergePDF      bool     `json:"mergePdf"`
-	MergeFilename string   `json:"mergeFilename"`
-	ScanMode      string   `json:"scanMode"` // "dual" or "single"
+	ImageDir       string   `json:"imageDir"`
+	OutputDir      string   `json:"outputDir"`
+	CredFile       string   `json:"credFile"`
+	Languages      []string `json:"languages"`
+	Concurrency    int      `json:"concurrency"`
+	MergePDF       bool     `json:"mergePdf"`
+	MergeFilename  string   `json:"mergeFilename"`
+	ScanMode       string   `json:"scanMode"`       // "dual" or "single"
+	Provider       string   `json:"provider"`       // "google" or "ocrspace"
+	OcrSpaceApiKey string   `json:"ocrSpaceApiKey"` // OCR.space API key
+	OcrSpaceEngine int      `json:"ocrSpaceEngine"` // 1, 2, or 3
+	OcrSpacePlan   string   `json:"ocrSpacePlan"`   // "free" or "pro"
+	TesseractPath  string   `json:"tesseractPath"`  // path to tesseract.exe
+	SelectedFiles  []string `json:"selectedFiles"`  // user-selected file paths from frontend
 }
 
 // AppConfig persisted to config.json next to executable
 type AppConfig struct {
-	CredFile      string   `json:"credFile"`
-	Languages     []string `json:"languages"`
-	Concurrency   int      `json:"concurrency"`
-	OutputDir     string   `json:"outputDir"`
-	MergePDF      bool     `json:"mergePdf"`
-	MergeFilename string   `json:"mergeFilename"`
-	Theme         string   `json:"theme"`
-	ScanMode      string   `json:"scanMode"` // "dual" or "single"
-	UILang        string   `json:"uiLang"`   // UI language code, e.g. "zh-TW", "en"
+	CredFile       string   `json:"credFile"`
+	Languages      []string `json:"languages"`
+	Concurrency    int      `json:"concurrency"`
+	OutputDir      string   `json:"outputDir"`
+	MergePDF       bool     `json:"mergePdf"`
+	MergeFilename  string   `json:"mergeFilename"`
+	Theme          string   `json:"theme"`
+	ScanMode       string   `json:"scanMode"`       // "dual" or "single"
+	UILang         string   `json:"uiLang"`         // UI language code, e.g. "zh-TW", "en"
+	Provider       string   `json:"provider"`       // "google" or "ocrspace"
+	OcrSpaceApiKey string   `json:"ocrSpaceApiKey"` // OCR.space API key
+	OcrSpaceEngine int      `json:"ocrSpaceEngine"` // OCR.space engine (1, 2, or 3)
+	OcrSpacePlan   string   `json:"ocrSpacePlan"`   // "free" or "pro"
+	TesseractPath  string   `json:"tesseractPath"`  // path to tesseract.exe
+	ImageDir       string   `json:"imageDir"`       // last used image folder
 }
 
 // Session persisted to session.json for resume capability
@@ -56,6 +67,25 @@ type Session struct {
 	ScanMode       string   `json:"scanMode"`
 	TotalFiles     int      `json:"totalFiles"`
 	ProcessedFiles []string `json:"processedFiles"`
+	Provider       string   `json:"provider"`
+	OcrSpaceApiKey string   `json:"ocrSpaceApiKey"`
+	OcrSpaceEngine int      `json:"ocrSpaceEngine"`
+	OcrSpacePlan   string   `json:"ocrSpacePlan"`
+	TesseractPath  string   `json:"tesseractPath"`
+	SelectedFiles  []string `json:"selectedFiles"`
+}
+
+// UsageRecord tracks API calls for one provider+plan on one date
+type UsageRecord struct {
+	Date     string `json:"date"`     // "2006-01-02"
+	Provider string `json:"provider"` // "google" or "ocrspace"
+	Plan     string `json:"plan"`     // "" (google), "free", "pro"
+	Count    int    `json:"count"`
+}
+
+// UsageStats holds all usage records, persisted to stats.json
+type UsageStats struct {
+	Records []UsageRecord `json:"records"`
 }
 
 // LogEntry sent via event to frontend

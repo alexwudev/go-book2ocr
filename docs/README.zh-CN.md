@@ -8,7 +8,7 @@
   <a href="../README.md">English</a> | <a href="README.zh-TW.md">繁體中文</a> | 简体中文 | <a href="README.ja.md">日本語</a>
 </p>
 
-一款桌面应用程序，用于批量 OCR 处理。使用 [Wails](https://wails.io/)（Go 后端 + Web 前端）开发，通过 [Google Cloud Vision API](https://cloud.google.com/vision) 识别扫描书页中的文字，并输出可搜索的 PDF 文件。支持 **Windows** 和 **Linux**。
+一款桌面应用程序，用于批量 OCR 处理。使用 [Wails](https://wails.io/)（Go 后端 + Web 前端）开发，支持三种 OCR 引擎 — [Google Cloud Vision API](https://cloud.google.com/vision)、[OCR.space](https://ocr.space/) 以及 [Tesseract](https://github.com/tesseract-ocr/tesseract)（本地离线） — 识别扫描书页中的文字，并输出可搜索的 PDF 文件。支持 **Windows** 和 **Linux**。
 
 <h2 id="目录">目录</h2>
 
@@ -59,8 +59,9 @@
                      ▼
 ┌─────────────────────────────────────────┐
 │  4. 批量 OCR → PDF               [OCR] │
-│     将图片发送至 Google Cloud Vision    │
-│     API，每页生成一份 PDF              │
+│     将图片发送至 OCR 引擎识别          │
+│     （Cloud Vision / OCR.space /        │
+│      Tesseract），每页生成一份 PDF      │
 └────────────────────┬────────────────────┘
                      │
                      ▼
@@ -80,7 +81,7 @@
 - 执行前可预览旧文件名与新文件名的对照
 
 <h3 id="批量-ocr">批量 OCR <a href="#目录">⬆</a></h3>
-- 将图片发送至 Google Cloud Vision API 进行文字识别
+- **三种 OCR 引擎**：Google Cloud Vision API（云端，准确度最高）、OCR.space（云端，有免费额度）、Tesseract（本地离线，完全免费）
 - **双页模式**：从双页扫描图中拆分左右页，分别输出为独立的 PDF 页面
 - **单页模式**：一张图片 = 一页 PDF
 - 并发处理（可设置 1-10 个 worker）
@@ -158,7 +159,10 @@ scripts\build.bat          # Windows 环境
 <h3 id="ocr-标签页">OCR 标签页 <a href="#目录">⬆</a></h3>
 
 1. 点击**选择图片文件夹** — 选择已重命名的图片文件夹
-2. 点击**选择 API 密钥** — 选择 Google Cloud 服务账户 JSON 文件
+2. 选择 **OCR 引擎**：
+   - **Google Cloud Vision** — 选择服务账户 JSON 密钥文件
+   - **OCR.space** — 输入 API Key，选择引擎与方案
+   - **Tesseract（本地）** — 设置 `tesseract.exe` 路径（可使用自动检测或手动浏览）
 3. 设置**语言**（例如 `zh-CN` 简体中文、`zh-TW` 繁体中文、`en` 英文）
 4. 调整**并发数量**（默认 5，最大 10）
 5. 选择是否**合并**所有输出 PDF 为单一文件
@@ -188,7 +192,10 @@ scripts\build.bat          # Windows 环境
 
 **两个平台均需：**
 
-- **Google Cloud Vision API** 凭据（服务账户 JSON 密钥）— 详见下方设置
+- **至少配置一种 OCR 引擎：**
+  - **Google Cloud Vision API** — 服务账户 JSON 密钥（详见下方设置）
+  - **OCR.space** — 免费 API Key，可从 [ocr.space](https://ocr.space/ocrapi/freekey) 获取
+  - **Tesseract** — 安装 [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki)（完全免费，无需网络）
 - **CJK 字体**（仅在 OCR 中日韩文字时需要）— 详见下方设置
 
 <h2 id="设置">设置 <a href="#目录">⬆</a></h2>
@@ -256,6 +263,8 @@ cp docs/config.example.json config.json
 | `theme` | `"dark"` 或 `"light"` |
 | `scanMode` | `"dual"`（双页扫描）或 `"single"`（单页扫描） |
 | `uiLang` | 界面语言代码（例如 `"zh-TW"`、`"en"`、`"ja"`） |
+| `provider` | OCR 引擎：`"google"`、`"ocrspace"` 或 `"tesseract"` |
+| `tesseractPath` | `tesseract.exe` 的路径（仅 Tesseract 引擎需要） |
 
 <h2 id="从源码构建">从源码构建 <a href="#目录">⬆</a></h2>
 
@@ -335,6 +344,9 @@ go-book2ocr/
 │   │   ├── app.go       # Core app struct, config, session, thumbnails
 │   │   ├── models.go    # Shared data types
 │   │   ├── ocr.go       # OCR pipeline, Vision API, PDF generation
+│   │   ├── ocrspace.go  # OCR.space API integration
+│   │   ├── tesseract.go # Tesseract subprocess integration
+│   │   ├── stats.go     # Usage statistics tracking
 │   │   ├── rename.go    # Batch rename logic, page numbering
 │   │   └── convert.go   # Image resize/conversion
 │   └── taskbar/

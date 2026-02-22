@@ -15,7 +15,7 @@ func (a *App) LoadImagesFromFolder(dir string) ([]ImageInfo, error) {
 		return nil, fmt.Errorf("read dir: %w", err)
 	}
 
-	var images []ImageInfo
+	images := make([]ImageInfo, 0)
 	idx := 0
 	for _, e := range entries {
 		if e.IsDir() {
@@ -30,7 +30,6 @@ func (a *App) LoadImagesFromFolder(dir string) ([]ImageInfo, error) {
 			OriginalName: e.Name(),
 			Index:        idx,
 			PageType:     "Normal",
-			IsRoman:      false,
 		})
 		idx++
 	}
@@ -46,24 +45,27 @@ func (a *App) LoadImagesFromFolder(dir string) ([]ImageInfo, error) {
 	return images, nil
 }
 
-// ComputeRenamePreview computes the rename mapping based on page types and numbering
-func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, romanStart int, arabicStart int) []RenamePreview {
+// ComputeRenamePreview computes the rename mapping for dual-page scanning mode.
+// bodyStartIdx: image index where body pages begin (0 = all body, no pre-body).
+// bodyStart: first page number for body section.
+// Pre-body pages use "Page-XXX-{num}" format; body pages use "Page-{num}" format.
+func (a *App) ComputeRenamePreview(images []ImageInfo, bodyStartIdx int, bodyStart int) []RenamePreview {
 	var previews []RenamePreview
 
-	currentPage := romanStart
-	isRoman := true
+	isPreBody := bodyStartIdx > 0
+	currentPage := 1
+	if !isPreBody {
+		currentPage = bodyStart
+	}
+
+	noIncCount := 0
 	typeBCount := 0
 	lastValidPage := 0
 
-	if arabicStartIdx <= 0 {
-		isRoman = false
-		currentPage = arabicStart
-	}
-
 	for i, img := range images {
-		if arabicStartIdx > 0 && i == arabicStartIdx {
-			isRoman = false
-			currentPage = arabicStart
+		if isPreBody && i == bodyStartIdx {
+			isPreBody = false
+			currentPage = bodyStart
 			typeBCount = 0
 		}
 
@@ -79,6 +81,11 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 			ext = strings.ToUpper(ext)
 		}
 
+		prefix := ""
+		if isPreBody {
+			prefix = "XXX-"
+		}
+
 		var preview RenamePreview
 		preview.OriginalName = img.OriginalName
 		preview.PageType = img.PageType
@@ -88,68 +95,46 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 			preview.LeftPage = "[skip]"
 			preview.RightPage = ""
 			preview.NewName = img.OriginalName
+
+		case "NoIncluding":
+			noIncCount++
+			preview.LeftPage = "[—]"
+			preview.RightPage = ""
+			preview.NewName = fmt.Sprintf("NoIncluding-%03d%s", noIncCount, ext)
 
 		case "Normal":
 			typeBCount = 0
 			leftPage := currentPage
 			rightPage := currentPage + 1
 			lastValidPage = rightPage
-
-			if isRoman {
-				preview.LeftPage = toRoman(leftPage)
-				preview.RightPage = toRoman(rightPage)
-				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(leftPage), toRoman(rightPage), ext)
-			} else {
-				preview.LeftPage = fmt.Sprintf("%d", leftPage)
-				preview.RightPage = fmt.Sprintf("%d", rightPage)
-				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", leftPage, rightPage, ext)
-			}
+			preview.LeftPage = fmt.Sprintf("%d", leftPage)
+			preview.RightPage = fmt.Sprintf("%d", rightPage)
+			preview.NewName = fmt.Sprintf("Page-%s%03d-%03d%s", prefix, leftPage, rightPage, ext)
 			currentPage += 2
 
 		case "TypeA":
 			typeBCount = 0
 			leftPage := currentPage
 			lastValidPage = leftPage
-
-			if isRoman {
-				preview.LeftPage = toRoman(leftPage)
-				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(leftPage), toRoman(leftPage+1), ext)
-			} else {
-				preview.LeftPage = fmt.Sprintf("%d", leftPage)
-				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", leftPage, leftPage+1, ext)
-			}
+			preview.LeftPage = fmt.Sprintf("%d", leftPage)
+			preview.RightPage = "[img]"
+			preview.NewName = fmt.Sprintf("Page-%s%03d-%03d%s", prefix, leftPage, leftPage+1, ext)
 			currentPage += 1
 
 		case "TypeB":
 			suffix := string(rune('a' + typeBCount))
 			typeBCount++
-
-			if isRoman {
-				preview.LeftPage = "[img]"
-				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("Page-r-%s-%s-%s%s", toRoman(lastValidPage), toRoman(lastValidPage+1), suffix, ext)
-			} else {
-				preview.LeftPage = "[img]"
-				preview.RightPage = "[img]"
-				preview.NewName = fmt.Sprintf("Page-%03d-%03d-%s%s", lastValidPage, lastValidPage+1, suffix, ext)
-			}
+			preview.LeftPage = "[img]"
+			preview.RightPage = "[img]"
+			preview.NewName = fmt.Sprintf("Page-%s%03d-%03d-%s%s", prefix, lastValidPage, lastValidPage+1, suffix, ext)
 
 		case "TypeC":
 			typeBCount = 0
 			rightPage := currentPage
 			lastValidPage = rightPage
-
-			if isRoman {
-				preview.LeftPage = "[img]"
-				preview.RightPage = toRoman(rightPage)
-				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(rightPage-1), toRoman(rightPage), ext)
-			} else {
-				preview.LeftPage = "[img]"
-				preview.RightPage = fmt.Sprintf("%d", rightPage)
-				preview.NewName = fmt.Sprintf("Page-%03d-%03d%s", rightPage-1, rightPage, ext)
-			}
+			preview.LeftPage = "[img]"
+			preview.RightPage = fmt.Sprintf("%d", rightPage)
+			preview.NewName = fmt.Sprintf("Page-%s%03d-%03d%s", prefix, rightPage-1, rightPage, ext)
 			currentPage += 1
 		}
 
@@ -159,24 +144,24 @@ func (a *App) ComputeRenamePreview(images []ImageInfo, arabicStartIdx int, roman
 	return previews
 }
 
-// ComputeRenamePreviewSingle computes rename mapping for single-page scanning mode
-func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int, romanStart int, arabicStart int) []RenamePreview {
+// ComputeRenamePreviewSingle computes rename mapping for single-page scanning mode.
+func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, bodyStartIdx int, bodyStart int) []RenamePreview {
 	var previews []RenamePreview
 
-	currentPage := romanStart
-	isRoman := true
+	isPreBody := bodyStartIdx > 0
+	currentPage := 1
+	if !isPreBody {
+		currentPage = bodyStart
+	}
+
+	noIncCount := 0
 	typeBCount := 0
 	lastValidPage := 0
 
-	if arabicStartIdx <= 0 {
-		isRoman = false
-		currentPage = arabicStart
-	}
-
 	for i, img := range images {
-		if arabicStartIdx > 0 && i == arabicStartIdx {
-			isRoman = false
-			currentPage = arabicStart
+		if isPreBody && i == bodyStartIdx {
+			isPreBody = false
+			currentPage = bodyStart
 			typeBCount = 0
 		}
 
@@ -192,6 +177,11 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 			ext = strings.ToUpper(ext)
 		}
 
+		prefix := ""
+		if isPreBody {
+			prefix = "XXX-"
+		}
+
 		var preview RenamePreview
 		preview.OriginalName = img.OriginalName
 		preview.PageType = img.PageType
@@ -202,50 +192,36 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 			preview.RightPage = ""
 			preview.NewName = img.OriginalName
 
+		case "NoIncluding":
+			noIncCount++
+			preview.LeftPage = "[—]"
+			preview.RightPage = ""
+			preview.NewName = fmt.Sprintf("NoIncluding-%03d%s", noIncCount, ext)
+
 		case "Normal":
 			typeBCount = 0
 			page := currentPage
 			lastValidPage = page
-
-			if isRoman {
-				preview.LeftPage = toRoman(page)
-				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("Page-r-%s%s", toRoman(page), ext)
-			} else {
-				preview.LeftPage = fmt.Sprintf("%d", page)
-				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("Page-%03d%s", page, ext)
-			}
+			preview.LeftPage = fmt.Sprintf("%d", page)
+			preview.RightPage = ""
+			preview.NewName = fmt.Sprintf("Page-%s%03d%s", prefix, page, ext)
 			currentPage++
 
 		case "TypeB":
 			suffix := string(rune('a' + typeBCount))
 			typeBCount++
-
-			if isRoman {
-				preview.LeftPage = "[img]"
-				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("Page-r-%s-%s%s", toRoman(lastValidPage), suffix, ext)
-			} else {
-				preview.LeftPage = "[img]"
-				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("Page-%03d-%s%s", lastValidPage, suffix, ext)
-			}
+			preview.LeftPage = "[img]"
+			preview.RightPage = ""
+			preview.NewName = fmt.Sprintf("Page-%s%03d-%s%s", prefix, lastValidPage, suffix, ext)
 
 		default:
+			// TypeA, TypeC treated as Normal in single-page mode
 			typeBCount = 0
 			page := currentPage
 			lastValidPage = page
-
-			if isRoman {
-				preview.LeftPage = toRoman(page)
-				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("Page-r-%s%s", toRoman(page), ext)
-			} else {
-				preview.LeftPage = fmt.Sprintf("%d", page)
-				preview.RightPage = ""
-				preview.NewName = fmt.Sprintf("Page-%03d%s", page, ext)
-			}
+			preview.LeftPage = fmt.Sprintf("%d", page)
+			preview.RightPage = ""
+			preview.NewName = fmt.Sprintf("Page-%s%03d%s", prefix, page, ext)
 			currentPage++
 		}
 
@@ -255,7 +231,9 @@ func (a *App) ComputeRenamePreviewSingle(images []ImageInfo, arabicStartIdx int,
 	return previews
 }
 
-// ExecuteRename renames files on disk according to the preview
+// ExecuteRename renames files on disk according to the preview.
+// Uses direct rename when safe; falls back to two-phase (via temp names) only
+// when name conflicts exist. Includes pre-validation and rollback on failure.
 func (a *App) ExecuteRename(dir string, previews []RenamePreview) error {
 	type renameOp struct {
 		from string
@@ -270,56 +248,88 @@ func (a *App) ExecuteRename(dir string, previews []RenamePreview) error {
 		}
 		ops = append(ops, renameOp{
 			from: filepath.Join(dir, p.OriginalName),
-			temp: filepath.Join(dir, fmt.Sprintf("__temp_rename_%04d__", i)),
+			temp: filepath.Join(dir, fmt.Sprintf("__temp_%04d__", i)),
 			to:   filepath.Join(dir, p.NewName),
 		})
 	}
 
+	if len(ops) == 0 {
+		return nil
+	}
+
+	// Pre-check: verify every source file is accessible on disk
 	for _, op := range ops {
-		if err := os.Rename(op.from, op.temp); err != nil {
-			return fmt.Errorf("rename %s -> temp: %w", op.from, err)
+		if _, err := os.Stat(op.from); err != nil {
+			return fmt.Errorf("cannot access %s: %w", filepath.Base(op.from), err)
 		}
 	}
 
+	// Determine whether two-phase rename is needed.
+	// It's only required when a target name collides with an existing file
+	// that isn't the same source (e.g. Page-003.JPG → Page-005.JPG while
+	// another file is already named Page-005.JPG).
+	existing := make(map[string]bool)
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		existing[strings.ToLower(e.Name())] = true
+	}
+
+	needTwoPhase := false
 	for _, op := range ops {
+		toBase := strings.ToLower(filepath.Base(op.to))
+		fromBase := strings.ToLower(filepath.Base(op.from))
+		if toBase != fromBase && existing[toBase] {
+			needTwoPhase = true
+			break
+		}
+	}
+
+	if !needTwoPhase {
+		// Direct rename — no conflicts, no temp files needed
+		var done []renameOp
+		for _, op := range ops {
+			if err := os.Rename(op.from, op.to); err != nil {
+				// Rollback successful renames
+				for j := len(done) - 1; j >= 0; j-- {
+					os.Rename(done[j].to, done[j].from)
+				}
+				return fmt.Errorf("rename %s → %s: %w",
+					filepath.Base(op.from), filepath.Base(op.to), err)
+			}
+			done = append(done, op)
+		}
+		return nil
+	}
+
+	// Two-phase rename with full rollback support
+	// Phase 1: source → temp
+	var phase1Done []renameOp
+	for _, op := range ops {
+		if err := os.Rename(op.from, op.temp); err != nil {
+			// Rollback phase 1
+			for j := len(phase1Done) - 1; j >= 0; j-- {
+				os.Rename(phase1Done[j].temp, phase1Done[j].from)
+			}
+			return fmt.Errorf("rename %s → temp: %w", filepath.Base(op.from), err)
+		}
+		phase1Done = append(phase1Done, op)
+	}
+
+	// Phase 2: temp → target
+	for i, op := range ops {
 		if err := os.Rename(op.temp, op.to); err != nil {
-			return fmt.Errorf("rename temp -> %s: %w", op.to, err)
+			// Rollback phase 2 (undo completed phase-2 renames)
+			for j := i - 1; j >= 0; j-- {
+				os.Rename(ops[j].to, ops[j].temp)
+			}
+			// Rollback phase 1 (restore all originals)
+			for j := len(phase1Done) - 1; j >= 0; j-- {
+				os.Rename(phase1Done[j].temp, phase1Done[j].from)
+			}
+			return fmt.Errorf("rename temp → %s: %w", filepath.Base(op.to), err)
 		}
 	}
 
 	return nil
 }
 
-func toRoman(n int) string {
-	if n <= 0 {
-		return "0"
-	}
-	values := []int{1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1}
-	symbols := []string{"m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"}
-	var result strings.Builder
-	for i, val := range values {
-		for n >= val {
-			result.WriteString(symbols[i])
-			n -= val
-		}
-	}
-	return result.String()
-}
-
-func fromRoman(s string) int {
-	romanMap := map[byte]int{
-		'i': 1, 'v': 5, 'x': 10, 'l': 50,
-		'c': 100, 'd': 500, 'm': 1000,
-	}
-	s = strings.ToLower(s)
-	result := 0
-	for i := 0; i < len(s); i++ {
-		val := romanMap[s[i]]
-		if i+1 < len(s) && romanMap[s[i+1]] > val {
-			result -= val
-		} else {
-			result += val
-		}
-	}
-	return result
-}
